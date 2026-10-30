@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>骰寶模擬器 - 13區完美高亮版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>骰寶模擬器</title>
 <style>
     /* ================= 基礎設定 ================= */
     * {
@@ -18,113 +18,129 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: flex-start; 
         min-height: 100vh;
+        padding: 0; 
         overflow-x: hidden;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
     }
 
     /* ================= 上方：互動骰盅區 ================= */
     .top-section {
         width: 100%;
-        height: 380px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-end; 
         align-items: center;
-        padding-bottom: 20px;
+        padding: 60px 10px 20px 10px; 
         background: radial-gradient(circle, #333 0%, #111 100%);
         border-bottom: 4px solid #b89847;
         flex-shrink: 0;
-        position: relative;
+        position: relative; 
     }
 
-    /* 餘額與狀態顯示 */
-    .status-bar {
+    /* 餘額 (絕對定位左上角) */
+    .balance {
         position: absolute;
-        top: 30px;
-        width: 90%;
-        max-width: 1400px;
-        display: flex;
-        justify-content: space-between;
-        color: white;
-        font-size: 28px;
+        top: 20px;
+        left: 20px;
+        color: #ffd700;
+        font-size: 24px;
         font-weight: bold;
+        z-index: 10;
     }
 
-    .balance { color: #ffd700; }
-    .message { color: #00ff00; transition: opacity 0.3s; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+    /* 狀態提示文字 (黃字) */
+    .message {
+        color: #ffd700; 
+        font-size: 24px;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(0,0,0,0.5); 
+        transition: opacity 0.3s;
+        margin-bottom: 20px;
+        text-align: center;
+        z-index: 10;
+    }
 
-    /* 骰盅主體 */
+    /* 骰盅主體 (俯視角) */
     .shaker-container {
         position: relative;
-        width: 280px;
-        height: 200px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-end;
-        margin-top: 50px;
-    }
-
-    /* 骰盅底座 */
-    .shaker-base {
-        width: 260px;
-        height: 90px;
-        background: #111;
-        border-radius: 15px;
-        border-bottom: 18px solid #00ff00;
-        box-shadow: 0 15px 30px rgba(0,255,0,0.3);
-        position: relative;
+        width: 240px;
+        height: 240px;
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 15px;
-        z-index: 2;
+        margin: 20px 0;
     }
 
-    /* 內部骰子 */
+    /* 黑色圓盤底座 (俯視) */
+    .shaker-base {
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle at center, #2a2a2a 0%, #111 100%);
+        border-radius: 50%;
+        border: 3px solid #333;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.1), inset 0 0 20px rgba(0, 255, 0, 0.05);
+        position: relative;
+        z-index: 1;
+        overflow: hidden; /* 確保骰子不會跑出圓盤 */
+        transition: box-shadow 0.5s ease;
+    }
+
+    /* 打完骰時底座發綠光 */
+    .shaker-base.glow {
+        box-shadow: 0 0 50px rgba(0, 255, 0, 0.6), inset 0 0 40px rgba(0, 255, 0, 0.4);
+        border-color: #00ff00;
+    }
+
+    /* 內部骰子 (絕對定位) */
     .dice {
-        width: 46px; height: 46px; background-color: #d13030; border-radius: 8px;
-        display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 6px;
-        box-shadow: inset 0 0 8px rgba(0,0,0,0.5), 2px 2px 5px rgba(0,0,0,0.5);
+        position: absolute;
+        width: 40px; height: 40px; background-color: #d13030; border-radius: 6px;
+        display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 5px;
+        box-shadow: 0 5px 10px rgba(0,0,0,0.6), inset 0 0 5px rgba(0,0,0,0.5);
         opacity: 0; 
-        transition: opacity 0.3s;
+        transition: opacity 0.3s, top 0.5s, left 0.5s, transform 0.5s;
     }
-    .dot { background-color: white; border-radius: 50%; width: 8px; height: 8px; align-self: center; justify-self: center; }
+    .dot { background-color: white; border-radius: 50%; width: 6px; height: 6px; align-self: center; justify-self: center; }
 
-    /* 骰盅蓋子 (金色) */
+    /* 金色圓蓋 (俯視) */
     .shaker-cover {
         position: absolute;
-        bottom: 60px;
-        width: 270px;
-        height: 260px;
-        background: linear-gradient(135deg, #fceabb 0%, #f8b500 40%, #b87333 100%);
-        border-radius: 15px 15px 8px 8px;
+        top: 0;
+        left: 0;
+        width: 240px;
+        height: 240px;
+        background: radial-gradient(circle at 30% 30%, #fceabb 0%, #f8b500 40%, #b87333 100%);
+        border-radius: 50%;
         box-shadow: inset -10px -10px 25px rgba(139, 69, 19, 0.6), 
-                    inset 5px 5px 15px rgba(255, 255, 255, 0.4), 
-                    8px 8px 25px rgba(0,0,0,0.8);
+                    inset 10px 10px 20px rgba(255, 255, 255, 0.4), 
+                    0 15px 35px rgba(0,0,0,0.8);
         z-index: 3;
-        transition: transform 0.5s ease-in-out;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         justify-content: center;
         align-items: center;
-        border: 2px solid #d4af37;
     }
     
-    /* 蓋子頂部的裝飾 */
+    /* 蓋子頂部的圓形裝飾 (把手) */
     .shaker-cover::before {
         content: '';
-        position: absolute;
-        top: -22px;
         width: 60px;
-        height: 40px;
-        background: linear-gradient(135deg, #fff5cc 0%, #e6a817 50%, #995c14 100%);
-        border-radius: 8px 8px 0 0;
-        box-shadow: inset 0 5px 10px rgba(255,255,255,0.5), 0 -2px 5px rgba(0,0,0,0.5);
+        height: 60px;
+        background: radial-gradient(circle at 30% 30%, #fff5cc, #e6a817, #995c14);
+        border-radius: 50%;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -5px 10px rgba(0,0,0,0.3);
     }
 
     /* 骰盅打開狀態 */
     .shaker-cover.open {
-        transform: translateY(-260px);
+        transform: translateY(-250px) scale(0.7) rotate(15deg);
+        opacity: 0;
+        pointer-events: none;
     }
 
     /* 震動動畫 */
@@ -147,20 +163,25 @@
 
     /* 控制按鈕 */
     .controls {
-        margin-top: 40px;
         display: flex;
-        gap: 30px;
+        gap: 15px;
         z-index: 10;
+        justify-content: center;
+        width: 90%;
+        max-width: 800px;
     }
     .btn {
-        padding: 18px 50px;
-        font-size: 24px;
+        padding: 15px 30px;
+        font-size: 20px;
         font-weight: bold;
         border: none;
         border-radius: 50px;
         cursor: pointer;
         transition: all 0.2s;
         box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+        flex: 1;
+        min-width: 120px;
+        max-width: 200px;
     }
     .btn:disabled {
         background: #444 !important;
@@ -178,8 +199,7 @@
         width: 100%;
         max-width: 1600px;
         position: relative;
-        margin: 30px 0;
-        height: 900px;
+        margin: 20px 0;
     }
 
     .table-board {
@@ -198,7 +218,7 @@
         gap: 8px; 
     }
 
-    /* 共用格子 (基礎樣式) */
+    /* 共用格子 */
     .cell {
         background-color: #fcf9f2;
         border: 2px solid #b89847;
@@ -218,14 +238,14 @@
     .table-board.betting-active .cell:hover { background-color: #fff8e7; }
     .table-board:not(.betting-active) .cell { cursor: not-allowed; opacity: 0.85; }
 
-    /* 🌟 修復：被下注的高亮 (獨立選擇器，所有格子皆適用) 🌟 */
+    /* 被下注的高亮 */
     .bet-active { 
         background-color: #ffe4e1 !important; 
         border-color: #ff3b3b !important;
         box-shadow: inset 0 0 0 4px #ff3b3b !important; 
     }
     
-    /* 🌟 中獎高亮特效 🌟 */
+    /* 中獎高亮特效 */
     .win-cell {
         background-color: #fffacd !important;
         box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700 !important;
@@ -233,7 +253,7 @@
         z-index: 10;
     }
 
-    /* 🌟 下注籌碼標記 🌟 */
+    /* 下注籌碼標記 */
     .bet-mark {
         position: absolute;
         top: 50%;
@@ -363,26 +383,79 @@
     .btn-zoom:hover { background: #b89847; color: #111; }
     .btn-zoom.reset { font-size: 14px; }
 
+    /* ================= 響應式佈局 (手機端緊湊優化) ================= */
+    @media (max-width: 768px) {
+        .top-section {
+            padding: 40px 10px 15px 10px; 
+        }
+
+        .balance {
+            top: 10px;
+            left: 15px;
+            font-size: 16px;
+        }
+
+        .shaker-container {
+            transform: scale(0.55); 
+            margin: -20px 0 -30px 0; 
+        }
+
+        .message {
+            font-size: 16px; 
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            flex-direction: row;
+            gap: 8px;
+            width: 95%;
+        }
+        .btn {
+            padding: 12px 5px; 
+            font-size: 14px;
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+        }
+
+        .zoom-controls {
+            bottom: 15px;
+            right: 15px;
+            gap: 8px;
+        }
+        .btn-zoom {
+            width: 45px;
+            height: 45px;
+            font-size: 22px;
+        }
+        .btn-zoom.reset {
+            font-size: 13px;
+        }
+    }
 </style>
 </head>
 <body>
 
     <!-- 上方：骰盅與控制區 -->
     <div class="top-section">
-        <div class="status-bar">
-            <div>餘額: $<span id="balanceDisplay">1000</span></div>
-            <div class="message" id="messageDisplay">請點擊「開始搖骰」</div>
-        </div>
+        
+        <!-- 左上角餘額 -->
+        <div class="balance">餘額: $<span id="balanceDisplay">1000</span></div>
 
+        <!-- 骰盅 -->
         <div class="shaker-container" id="shakerContainer">
-            <div class="shaker-cover" id="shakerCover"></div>
-            <div class="shaker-base">
+            <div class="shaker-base" id="shakerBase">
                 <div class="dice" id="die1"></div>
                 <div class="dice" id="die2"></div>
                 <div class="dice" id="die3"></div>
             </div>
+            <div class="shaker-cover" id="shakerCover"></div>
         </div>
 
+        <!-- 黃字提示 (放在按鈕上方) -->
+        <div class="message" id="messageDisplay">請點擊「開始搖骰」</div>
+
+        <!-- 按鈕 -->
         <div class="controls">
             <button class="btn btn-roll" id="rollBtn" onclick="startRoll()">開始搖骰</button>
             <button class="btn btn-open" id="openBtn" onclick="openAndSettle()" disabled>買定開盅</button>
@@ -695,6 +768,7 @@
         const clearBtn = document.getElementById('clearBtn');
         const shakerCover = document.getElementById('shakerCover');
         const shakerContainer = document.getElementById('shakerContainer');
+        const shakerBase = document.getElementById('shakerBase');
         const diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')];
         const tableBoard = document.getElementById('tableBoard');
 
@@ -711,8 +785,30 @@
             }
         }
 
+        // 隨機排列骰子位置與角度
+        function positionDiceRandomly() {
+            // 定義一些在圓盤內的安全座標
+            const positions = [
+                { top: '25%', left: '15%', rot: -15 },
+                { top: '25%', left: '55%', rot: 20 },
+                { top: '55%', left: '25%', rot: 10 },
+                { top: '55%', left: '60%', rot: -25 },
+                { top: '40%', left: '40%', rot: 45 },
+                { top: '15%', left: '40%', rot: 5 },
+                { top: '65%', left: '40%', rot: -10 }
+            ];
+            // 打亂陣列
+            positions.sort(() => Math.random() - 0.5);
+            
+            diceEls.forEach((el, index) => {
+                el.style.top = positions[index].top;
+                el.style.left = positions[index].left;
+                el.style.transform = `rotate(${positions[index].rot}deg)`;
+            });
+        }
+
         function updateBalance() { balanceEl.innerText = balance; }
-        function showMessage(msg, color = '#00ff00') {
+        function showMessage(msg, color = '#ffd700') {
             messageEl.style.opacity = 0;
             setTimeout(() => {
                 messageEl.innerText = msg;
@@ -735,6 +831,7 @@
             tableBoard.classList.remove('betting-active'); 
             
             clearWinHighlights();
+            shakerBase.classList.remove('glow'); // 搖骰前關閉綠光
 
             shakerContainer.classList.add('shaking');
             showMessage("搖骰中，請稍候...", "#fff");
@@ -747,6 +844,12 @@
                     Math.floor(Math.random() * 6) + 1
                 ];
                 
+                // 打完骰，底部亮微綠光
+                shakerBase.classList.add('glow');
+
+                // 隨機排列位置
+                positionDiceRandomly();
+
                 gameState = 'betting';
                 tableBoard.classList.add('betting-active');
                 showMessage("搖骰完畢！請下注（點擊格子）。", "#ffd700");
@@ -795,7 +898,7 @@
             
             openBtn.disabled = true;
             clearBtn.disabled = true;
-            showMessage("已清除下注", "#aaa");
+            showMessage("已清除下注", "#ffd700");
         }
 
         function openAndSettle() {
@@ -819,7 +922,6 @@
             const isTriple = (currentDice[0] === currentDice[1] && currentDice[1] === currentDice[2]);
             const tripleVal = isTriple ? currentDice[0] : 0;
             
-            // 1. 先找出所有符合中獎條件的 data-type
             const winningTypes = new Set();
 
             if (!isTriple) {
@@ -832,24 +934,20 @@
                 winningTypes.add(`Triple${tripleVal}`);
             }
 
-            // 雙骰
             [1, 2, 3, 4, 5, 6].forEach(num => {
                 if (currentDice.filter(x => x === num).length >= 2) {
                     winningTypes.add(`Double${num}`);
                 }
             });
 
-            // 點數總和
             winningTypes.add(`Sum${total}`);
 
-            // 單骰 (有出現就中)
             [1, 2, 3, 4, 5, 6].forEach(num => {
                 if (currentDice.includes(num)) {
                     winningTypes.add(`Single${num}`);
                 }
             });
 
-            // 兩骰組合
             [1, 2, 3, 4, 5, 6].forEach(n1 => {
                 [1, 2, 3, 4, 5, 6].forEach(n2 => {
                     if (n1 < n2 && currentDice.includes(n1) && currentDice.includes(n2)) {
@@ -858,7 +956,6 @@
                 });
             });
 
-            // 2. 將畫面上所有符合 winningTypes 的格子點亮 (不管有沒有下注)
             document.querySelectorAll('[data-type]').forEach(cell => {
                 const type = cell.getAttribute('data-type');
                 if (winningTypes.has(type)) {
@@ -866,11 +963,10 @@
                 }
             });
 
-            // 3. 計算玩家的派彩
             let winnings = 0;
             
             for (let type in currentBets) {
-                if (!winningTypes.has(type)) continue; // 如果沒中獎，跳過
+                if (!winningTypes.has(type)) continue; 
                 
                 let betAmt = currentBets[type];
                 let odds = 0;
@@ -890,7 +986,7 @@
                 }
                 else if (type.startsWith('Single')) {
                     let num = parseInt(type.replace('Single', ''));
-                    odds = currentDice.filter(x => x === num).length; // 幾顆賠幾倍
+                    odds = currentDice.filter(x => x === num).length; 
                 }
                 else if (type.startsWith('Combo')) odds = 5;
 
@@ -907,7 +1003,6 @@
                 showMessage(`${resultMsg} 未中獎。`, "#ff3b3b");
             }
 
-            // 清理注單
             currentBets = {};
             document.querySelectorAll('.bet-active').forEach(el => el.classList.remove('bet-active'));
             document.querySelectorAll('.bet-mark').forEach(el => el.remove());
