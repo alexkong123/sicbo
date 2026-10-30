@@ -35,22 +35,11 @@
         flex-direction: column;
         justify-content: flex-end; 
         align-items: center;
-        padding: 60px 10px 20px 10px; 
+        padding: 20px 10px 20px 10px; 
         background: radial-gradient(circle, #333 0%, #111 100%);
         border-bottom: 4px solid #b89847;
         flex-shrink: 0;
         position: relative; 
-    }
-
-    /* 餘額 (絕對定位左上角) */
-    .balance {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        color: #ffd700;
-        font-size: 24px;
-        font-weight: bold;
-        z-index: 10;
     }
 
     /* 狀態提示文字 (黃字) */
@@ -60,7 +49,8 @@
         font-weight: bold;
         text-shadow: 0 0 10px rgba(0,0,0,0.5); 
         transition: opacity 0.3s;
-        margin-bottom: 20px;
+        margin-top: 10px;
+        margin-bottom: 15px;
         text-align: center;
         z-index: 10;
     }
@@ -73,7 +63,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        margin: 20px 0;
+        margin: 10px 0;
     }
 
     /* 黑色圓盤底座 (俯視) */
@@ -86,7 +76,7 @@
         box-shadow: 0 0 20px rgba(0, 255, 0, 0.1), inset 0 0 20px rgba(0, 255, 0, 0.05);
         position: relative;
         z-index: 1;
-        overflow: hidden; /* 確保骰子不會跑出圓盤 */
+        overflow: hidden; 
         transition: box-shadow 0.5s ease;
     }
 
@@ -169,6 +159,7 @@
         justify-content: center;
         width: 90%;
         max-width: 800px;
+        margin-bottom: 20px;
     }
     .btn {
         padding: 15px 30px;
@@ -193,6 +184,48 @@
     .btn-roll { background: linear-gradient(to bottom, #fceabb, #f8b500); color: #333; }
     .btn-open { background: linear-gradient(to bottom, #ff7e5f, #feb47b); color: #333; }
     .btn-clear { background: #555; color: white; }
+
+    /* 籌碼板 */
+    .chip-board {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .chip {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 2px solid transparent;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    }
+
+    .chip:hover { transform: translateY(-3px); }
+
+    /* 籌碼高亮狀態 */
+    .chip.active {
+        border-color: #fff;
+        transform: translateY(-5px) scale(1.1);
+        box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 8px 15px rgba(0,0,0,0.6);
+    }
+
+    /* 5種顏色設定 */
+    .chip-10 { background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b); box-shadow: 0 5px 10px rgba(192,57,43,0.5); }
+    .chip-50 { background: radial-gradient(circle at 30% 30%, #4a90e2, #2980b9); box-shadow: 0 5px 10px rgba(41,128,185,0.5); }
+    .chip-100 { background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60); box-shadow: 0 5px 10px rgba(39,174,96,0.5); }
+    .chip-500 { background: radial-gradient(circle at 30% 30%, #555, #222); box-shadow: 0 5px 10px rgba(0,0,0,0.8); }
+    .chip-1000 { background: radial-gradient(circle at 30% 30%, #f1c40f, #d4ac0d); box-shadow: 0 5px 10px rgba(212,172,13,0.5); color: #333; text-shadow: none; }
 
     /* ================= 下方：投注區 ================= */
     .board-container {
@@ -264,9 +297,10 @@
         color: white;
         border-radius: 50%;
         display: flex; justify-content: center; align-items: center;
-        font-size: 16px; font-weight: bold;
+        font-size: 14px; font-weight: bold;
         box-shadow: 1px 1px 5px rgba(0,0,0,0.6);
         z-index: 5;
+        text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
     }
 
     /* 文字樣式 */
@@ -383,21 +417,15 @@
     .btn-zoom:hover { background: #b89847; color: #111; }
     .btn-zoom.reset { font-size: 14px; }
 
-    /* ================= 響應式佈局 (手機端緊湊優化) ================= */
+    /* ================= 響應式佈局 (手機端優化) ================= */
     @media (max-width: 768px) {
         .top-section {
-            padding: 40px 10px 15px 10px; 
-        }
-
-        .balance {
-            top: 10px;
-            left: 15px;
-            font-size: 16px;
+            padding: 15px 10px 15px 10px; 
         }
 
         .shaker-container {
             transform: scale(0.55); 
-            margin: -20px 0 -30px 0; 
+            margin: -30px 0 -40px 0; 
         }
 
         .message {
@@ -409,6 +437,7 @@
             flex-direction: row;
             gap: 8px;
             width: 95%;
+            margin-bottom: 15px;
         }
         .btn {
             padding: 12px 5px; 
@@ -416,6 +445,17 @@
             flex: 1;
             min-width: 0;
             white-space: nowrap;
+        }
+
+        .chip-board {
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .chip {
+            width: 40px;
+            height: 40px;
+            font-size: 12px;
         }
 
         .zoom-controls {
@@ -439,9 +479,6 @@
     <!-- 上方：骰盅與控制區 -->
     <div class="top-section">
         
-        <!-- 左上角餘額 -->
-        <div class="balance">餘額: $<span id="balanceDisplay">1000</span></div>
-
         <!-- 骰盅 -->
         <div class="shaker-container" id="shakerContainer">
             <div class="shaker-base" id="shakerBase">
@@ -452,7 +489,7 @@
             <div class="shaker-cover" id="shakerCover"></div>
         </div>
 
-        <!-- 黃字提示 (放在按鈕上方) -->
+        <!-- 黃字提示 -->
         <div class="message" id="messageDisplay">請點擊「開始搖骰」</div>
 
         <!-- 按鈕 -->
@@ -460,6 +497,15 @@
             <button class="btn btn-roll" id="rollBtn" onclick="startRoll()">開始搖骰</button>
             <button class="btn btn-open" id="openBtn" onclick="openAndSettle()" disabled>買定開盅</button>
             <button class="btn btn-clear" id="clearBtn" onclick="clearBets()" disabled>清除下注</button>
+        </div>
+
+        <!-- 籌碼板 -->
+        <div class="chip-board" id="chipBoard">
+            <div class="chip chip-10 active" onclick="selectChip(10, this)">10</div>
+            <div class="chip chip-50" onclick="selectChip(50, this)">50</div>
+            <div class="chip chip-100" onclick="selectChip(100, this)">100</div>
+            <div class="chip chip-500" onclick="selectChip(500, this)">500</div>
+            <div class="chip chip-1000" onclick="selectChip(1000, this)">1000</div>
         </div>
     </div>
 
@@ -754,14 +800,12 @@
         window.addEventListener('resize', updateBoardScale);
 
         // ================= 遊戲狀態管理 =================
-        let balance = 1000;
-        const betAmount = 10; 
+        let currentChipValue = 10; // 預設籌碼面額
         let currentBets = {}; 
         
         let gameState = 'idle'; 
         let currentDice = [1, 1, 1];
 
-        const balanceEl = document.getElementById('balanceDisplay');
         const messageEl = document.getElementById('messageDisplay');
         const rollBtn = document.getElementById('rollBtn');
         const openBtn = document.getElementById('openBtn');
@@ -787,7 +831,6 @@
 
         // 隨機排列骰子位置與角度
         function positionDiceRandomly() {
-            // 定義一些在圓盤內的安全座標
             const positions = [
                 { top: '25%', left: '15%', rot: -15 },
                 { top: '25%', left: '55%', rot: 20 },
@@ -797,7 +840,6 @@
                 { top: '15%', left: '40%', rot: 5 },
                 { top: '65%', left: '40%', rot: -10 }
             ];
-            // 打亂陣列
             positions.sort(() => Math.random() - 0.5);
             
             diceEls.forEach((el, index) => {
@@ -807,7 +849,6 @@
             });
         }
 
-        function updateBalance() { balanceEl.innerText = balance; }
         function showMessage(msg, color = '#ffd700') {
             messageEl.style.opacity = 0;
             setTimeout(() => {
@@ -821,6 +862,22 @@
             document.querySelectorAll('.win-cell').forEach(el => el.classList.remove('win-cell'));
         }
 
+        // 選擇籌碼
+        function selectChip(value, element) {
+            if (gameState !== 'betting') {
+                showMessage("請先等待搖骰完畢再選擇籌碼", "#ff3b3b");
+                return;
+            }
+            currentChipValue = value;
+            
+            // 移除所有 active
+            document.querySelectorAll('.chip').forEach(el => el.classList.remove('active'));
+            // 加入當前 active
+            element.classList.add('active');
+            
+            showMessage(`已選擇 $${value} 籌碼，請點擊下方投注區。`, "#ffd700");
+        }
+
         function startRoll() {
             if (gameState !== 'idle') return;
             gameState = 'rolling';
@@ -831,7 +888,7 @@
             tableBoard.classList.remove('betting-active'); 
             
             clearWinHighlights();
-            shakerBase.classList.remove('glow'); // 搖骰前關閉綠光
+            shakerBase.classList.remove('glow');
 
             shakerContainer.classList.add('shaking');
             showMessage("搖骰中，請稍候...", "#fff");
@@ -844,31 +901,23 @@
                     Math.floor(Math.random() * 6) + 1
                 ];
                 
-                // 打完骰，底部亮微綠光
                 shakerBase.classList.add('glow');
-
-                // 隨機排列位置
                 positionDiceRandomly();
 
                 gameState = 'betting';
                 tableBoard.classList.add('betting-active');
-                showMessage("搖骰完畢！請下注（點擊格子）。", "#ffd700");
+                showMessage(`搖骰完畢！請使用 $${currentChipValue} 籌碼下注。`, "#ffd700");
+                
+                // 確保籌碼板處於可點擊狀態
+                document.querySelectorAll('.chip').forEach(el => el.style.opacity = 1);
             }, 2000);
         }
 
         function placeBet(el) {
             if (gameState !== 'betting') return; 
-            
-            if (balance < betAmount) {
-                showMessage("餘額不足！", "#ff3b3b");
-                return;
-            }
-
-            balance -= betAmount;
-            updateBalance();
 
             const type = el.getAttribute('data-type');
-            currentBets[type] = (currentBets[type] || 0) + betAmount;
+            currentBets[type] = (currentBets[type] || 0) + currentChipValue;
 
             el.classList.add('bet-active');
             let mark = el.querySelector('.bet-mark');
@@ -886,13 +935,8 @@
 
         function clearBets() {
             if (gameState !== 'betting') return;
-            let totalRefund = 0;
-            for (let key in currentBets) totalRefund += currentBets[key];
-            
-            balance += totalRefund;
-            currentBets = {};
-            updateBalance();
 
+            currentBets = {};
             document.querySelectorAll('.bet-active').forEach(el => el.classList.remove('bet-active'));
             document.querySelectorAll('.bet-mark').forEach(el => el.remove());
             
@@ -908,6 +952,9 @@
             openBtn.disabled = true;
             clearBtn.disabled = true;
             tableBoard.classList.remove('betting-active');
+
+            // 讓籌碼板變暗，表示不可下注
+            document.querySelectorAll('.chip').forEach(el => el.style.opacity = 0.5);
 
             renderDice(diceEls[0], currentDice[0]);
             renderDice(diceEls[1], currentDice[1]);
@@ -993,9 +1040,6 @@
                 winnings += betAmt * (odds + 1);
             }
 
-            balance += winnings;
-            updateBalance();
-
             let resultMsg = `開獎結果: ${currentDice.join(', ')} (總和 ${total}) | `;
             if (winnings > 0) {
                 showMessage(`${resultMsg} 恭喜中獎！贏得 $${winnings}`, "#ffd700");
@@ -1011,6 +1055,8 @@
                 gameState = 'idle';
                 rollBtn.disabled = false;
                 showMessage("請點擊「開始搖骰」進行下一局", "#aaa");
+                // 恢復籌碼板不透明度
+                document.querySelectorAll('.chip').forEach(el => el.style.opacity = 1);
             }, 3500);
         }
     </script>
