@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>骰寶模擬器</title>
+<title>骰寶模擬器 - 保留中獎籌碼版</title>
 <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial','Microsoft JhengHei',sans-serif}
     body{background-color:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:0;overflow-x:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
-    .top-section{width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:30px;padding:20px 10px;background:radial-gradient(circle,#333 0%,#111 100%);flex-shrink:0;position:relative}
+    .top-section{width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:30px;padding:20px 10px;background:radial-gradient(circle,#333 0%,#111 100%);flex-shrink:0;position:relative;transition:height 0.1s linear}
     .history-panel{width:220px;height:280px;background:rgba(0,0,0,.6);border:2px solid #b89847;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;box-shadow:inset 0 0 15px rgba(0,0,0,.8);position:absolute;left:30px;z-index:20}
     .history-panel::-webkit-scrollbar{width:6px;height:6px}
     .history-panel::-webkit-scrollbar-thumb{background:#b89847;border-radius:3px}
@@ -19,7 +19,7 @@
     .h-dot{background-color:#fff;border-radius:50%;width:3px;height:3px;align-self:center;justify-self:center}
     .h-result{font-size:14px;font-weight:bold;color:#fff;flex-shrink:0}
     .h-result.triple{color:#ffd700;text-shadow:0 0 5px rgba(255,215,0,.5)}
-    .main-play-area{display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;width:100%}
+    .main-play-area{display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;width:100%;transform-origin:center center}
     .message{color:#ffd700;font-size:20px;font-weight:bold;text-shadow:0 0 10px rgba(0,0,0,.5);transition:opacity .3s;margin-top:15px;margin-bottom:10px;text-align:center;z-index:10;min-height:24px}
     .shaker-container{position:relative;width:240px;height:240px;display:flex;justify-content:center;align-items:center;transform:scale(.85);margin:-18px}
     .shaker-base{width:220px;height:220px;background:radial-gradient(circle at center,#2a2a2a 0%,#111 100%);border-radius:50%;border:3px solid #333;box-shadow:0 0 20px rgba(0,255,0,.1),inset 0 0 20px rgba(0,255,0,.05);position:relative;z-index:1;overflow:hidden;transition:box-shadow .5s ease,border-color .5s ease}
@@ -123,32 +123,9 @@
     .btn-zoom:hover{background:#b89847;color:#111}
     .btn-zoom.reset{font-size:14px}
     
-    /* 新增：可上下拖动的金色分割線 */
-    .splitter {
-        width: 100%;
-        height: 14px;
-        background: linear-gradient(to right, #b89847, #ebd197, #b89847);
-        cursor: ns-resize;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        z-index: 2000;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 -2px 5px rgba(0,0,0,0.5);
-        border-top: 1px solid #fff;
-        border-bottom: 1px solid #111;
-        user-select: none;
-        -webkit-user-select: none;
-        flex-shrink: 0;
-    }
-    .splitter::before {
-        content: '≡ ≡';
-        color: #5a430c;
-        font-size: 14px;
-        font-weight: bold;
-        letter-spacing: 2px;
-        pointer-events: none;
-    }
+    /* 可上下拖動的黃金分割線 */
+    .splitter {width: 100%;height: 14px;background: linear-gradient(to right, #b89847, #ebd197, #b89847);cursor: ns-resize;display: flex;justify-content: center;align-items: center;position: relative;z-index: 2000;box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 -2px 5px rgba(0,0,0,0.5);border-top: 1px solid #fff;border-bottom: 1px solid #111;user-select: none;-webkit-user-select: none;flex-shrink: 0}
+    .splitter::before {content: '≡ ≡';color: #5a430c;font-size: 14px;font-weight: bold;letter-spacing: 2px;pointer-events: none}
 
     @media (max-width:768px){
         .top-section{flex-direction:column;padding:10px;gap:10px}
@@ -173,7 +150,7 @@
         <div class="history-panel" id="historyPanel">
             <h3>最新10局</h3>
         </div>
-        <div class="main-play-area">
+        <div class="main-play-area" id="mainPlayArea">
             <div class="shaker-container" id="shakerContainer">
                 <div class="shaker-base" id="shakerBase">
                     <div class="dice" id="die1"></div>
@@ -231,163 +208,63 @@
         <div class="table-board" id="tableBoard">
             <div class="main-row row-top">
                 <div class="cell side-cell" data-type="Big" onclick="placeBet(this)">
-                    <div class="en" style="font-size:22px;">BIG</div>
-                    <div class="en" style="font-size:12px;">ARE NUMBERS 11 TO 17</div>
-                    <div class="en" style="font-size:12px; color:#666;">11點至17點</div>
-                    <div class="odds-line" style="font-size: 18px;">1 WINS 1</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">一賠一</div>
-                    <div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
-                    <div class="big-word">大</div>
+                    <div class="en" style="font-size:22px;">BIG</div><div class="en" style="font-size:12px;">ARE NUMBERS 11 TO 17</div><div class="en" style="font-size:12px; color:#666;">11點至17點</div><div class="odds-line" style="font-size: 18px;">1 WINS 1</div><div class="en" style="font-size:12px; color:#c42020;">一賠一</div><div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div><div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div><div class="big-word">大</div>
                 </div>
                 <div class="center-container">
                     <div class="grid-16">
                         <div class="top-group span-3">
                             <div class="top-title">DOUBLE 1 WINS 8 雙骰一賠八</div>
                             <div class="top-cells-row">
-                                <div class="cell-v" data-type="Double6" onclick="placeBet(this)">
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    <div class="en" style="font-size:11px;">DOUBLE<br>SIX</div>
-                                    <div class="cn" style="font-size:13px;">雙六</div>
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                </div>
-                                <div class="cell-v" data-type="Double5" onclick="placeBet(this)">
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    <div class="en" style="font-size:11px;">DOUBLE<br>FIVE</div>
-                                    <div class="cn" style="font-size:13px;">雙五</div>
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                </div>
-                                <div class="cell-v" data-type="Double4" onclick="placeBet(this)">
-                                    <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                    <div class="en" style="font-size:11px;">DOUBLE<br>FOUR</div>
-                                    <div class="cn" style="font-size:13px;">雙四</div>
-                                    <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                </div>
+                                <div class="cell-v" data-type="Double6" onclick="placeBet(this)"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="en" style="font-size:11px;">DOUBLE<br>SIX</div><div class="cn" style="font-size:13px;">雙六</div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
+                                <div class="cell-v" data-type="Double5" onclick="placeBet(this)"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="en" style="font-size:11px;">DOUBLE<br>FIVE</div><div class="cn" style="font-size:13px;">雙五</div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
+                                <div class="cell-v" data-type="Double4" onclick="placeBet(this)"><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div><div class="en" style="font-size:11px;">DOUBLE<br>FOUR</div><div class="cn" style="font-size:13px;">雙四</div><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div></div>
                             </div>
                         </div>
                         <div class="top-group span-3">
                             <div class="top-title">1 WINS 150 1賠150</div>
                             <div class="top-cells-col">
-                                <div class="cell-h" data-type="Triple4" onclick="placeBet(this)">
-                                    <div class="dice-row">
-                                        <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                        <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                        <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                    </div>
-                                    <div class="label-row"><span class="en" style="font-size:11px;">TRIPLE FOUR</span> <span class="cn" style="font-size:13px;">圍四</span></div>
-                                </div>
-                                <div class="cell-h" data-type="Triple5" onclick="placeBet(this)">
-                                    <div class="dice-row">
-                                        <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                        <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                        <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    </div>
-                                    <div class="label-row"><span class="en" style="font-size:11px;">TRIPLE FIVE</span> <span class="cn" style="font-size:13px;">圍五</span></div>
-                                </div>
-                                <div class="cell-h" data-type="Triple6" onclick="placeBet(this)">
-                                    <div class="dice-row">
-                                        <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                        <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                        <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    </div>
-                                    <div class="label-row"><span class="en" style="font-size:11px;">TRIPLE SIX</span> <span class="cn" style="font-size:13px;">圍六</span></div>
-                                </div>
+                                <div class="cell-h" data-type="Triple4" onclick="placeBet(this)"><div class="dice-row"><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div></div><div class="label-row"><span class="en" style="font-size:11px;">TRIPLE FOUR</span> <span class="cn" style="font-size:13px;">圍四</span></div></div>
+                                <div class="cell-h" data-type="Triple5" onclick="placeBet(this)"><div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div><div class="label-row"><span class="en" style="font-size:11px;">TRIPLE FIVE</span> <span class="cn" style="font-size:13px;">圍五</span></div></div>
+                                <div class="cell-h" data-type="Triple6" onclick="placeBet(this)"><div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div><div class="label-row"><span class="en" style="font-size:11px;">TRIPLE SIX</span> <span class="cn" style="font-size:13px;">圍六</span></div></div>
                             </div>
                         </div>
                         <div class="top-group span-4">
                             <div class="top-title">1 WINS 24 1賠24</div>
                             <div class="any-triple-cell" data-type="AnyTriple" onclick="placeBet(this)">
-                                <div class="bg-dice-group" style="top: 10%; left: 10%;">
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    <div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
-                                </div>
-                                <div class="bg-dice-group" style="top: 45%; left: 8%;">
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    <div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
-                                </div>
-                                <div class="bg-dice-group" style="top: 10%; right: 10%;">
-                                    <div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div>
-                                    <div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div></div>
-                                </div>
-                                <div class="bg-dice-group" style="top: 45%; right: 8%;">
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    <div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
-                                </div>
-                                <div class="bg-dice-group" style="bottom: 2%; left: 25%;">
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    <div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
-                                </div>
-                                <div class="bg-dice-group" style="bottom: 2%; right: 25%;">
-                                    <div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div>
-                                    <div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div></div>
-                                </div>
-                                <div class="any-text-en">ANY<br>TRIPLE</div>
-                                <div class="any-text-cn">全圍</div>
+                                <div class="bg-dice-group" style="top: 10%; left: 10%;"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div></div>
+                                <div class="bg-dice-group" style="top: 45%; left: 8%;"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div></div>
+                                <div class="bg-dice-group" style="top: 10%; right: 10%;"><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div></div></div>
+                                <div class="bg-dice-group" style="top: 45%; right: 8%;"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div></div></div>
+                                <div class="bg-dice-group" style="bottom: 2%; left: 25%;"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div></div>
+                                <div class="bg-dice-group" style="bottom: 2%; right: 25%;"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div><div class="bg-dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div></div></div>
+                                <div class="any-text-en">ANY<br>TRIPLE</div><div class="any-text-cn">全圍</div>
                             </div>
                         </div>
                         <div class="top-group span-3">
                             <div class="top-title">1 WINS 150 1賠150</div>
                             <div class="top-cells-col">
-                                <div class="cell-h" data-type="Triple1" onclick="placeBet(this)">
-                                    <div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div></div>
-                                    <div class="label-row"><span class="en" style="font-size:11px;">TRIPLE ONE</span> <span class="cn" style="font-size:13px;">圍一</span></div>
-                                </div>
-                                <div class="cell-h" data-type="Triple2" onclick="placeBet(this)">
-                                    <div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
-                                    <div class="label-row"><span class="en" style="font-size:11px;">TRIPLE TWO</span> <span class="cn" style="font-size:13px;">圍二</span></div>
-                                </div>
-                                <div class="cell-h" data-type="Triple3" onclick="placeBet(this)">
-                                    <div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div></div>
-                                    <div class="label-row"><span class="en" style="font-size:11px;">TRIPLE THREE</span> <span class="cn" style="font-size:13px;">圍三</span></div>
-                                </div>
+                                <div class="cell-h" data-type="Triple1" onclick="placeBet(this)"><div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div></div><div class="label-row"><span class="en" style="font-size:11px;">TRIPLE ONE</span> <span class="cn" style="font-size:13px;">圍一</span></div></div>
+                                <div class="cell-h" data-type="Triple2" onclick="placeBet(this)"><div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div></div><div class="label-row"><span class="en" style="font-size:11px;">TRIPLE TWO</span> <span class="cn" style="font-size:13px;">圍二</span></div></div>
+                                <div class="cell-h" data-type="Triple3" onclick="placeBet(this)"><div class="dice-row"><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/3"></div></div></div><div class="label-row"><span class="en" style="font-size:11px;">TRIPLE THREE</span> <span class="cn" style="font-size:13px;">圍三</span></div></div>
                             </div>
                         </div>
                         <div class="top-group span-3">
                             <div class="top-title">DOUBLE 1 WINS 8 雙骰一賠八</div>
                             <div class="top-cells-row">
-                                <div class="cell-v" data-type="Double3" onclick="placeBet(this)">
-                                    <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:2/2"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                    <div class="en" style="font-size:11px;">DOUBLE<br>THREE</div>
-                                    <div class="cn" style="font-size:13px;">雙三</div>
-                                    <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:2/2"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                </div>
-                                <div class="cell-v" data-type="Double2" onclick="placeBet(this)">
-                                    <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                    <div class="en" style="font-size:11px;">DOUBLE<br>TWO</div>
-                                    <div class="cn" style="font-size:13px;">雙二</div>
-                                    <div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:3/3"></div></div>
-                                </div>
-                                <div class="cell-v" data-type="Double1" onclick="placeBet(this)">
-                                    <div class="dice-box"><div class="d b" style="grid-area:2/2"></div></div>
-                                    <div class="en" style="font-size:11px;">DOUBLE<br>ONE</div>
-                                    <div class="cn" style="font-size:13px;">雙一</div>
-                                    <div class="dice-box"><div class="d b" style="grid-area:2/2"></div></div>
-                                </div>
+                                <div class="cell-v" data-type="Double3" onclick="placeBet(this)"><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:2/2"></div><div class="d b" style="grid-area:3/3"></div></div><div class="en" style="font-size:11px;">DOUBLE<br>THREE</div><div class="cn" style="font-size:13px;">雙三</div><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:2/2"></div><div class="d b" style="grid-area:3/3"></div></div></div>
+                                <div class="cell-v" data-type="Double2" onclick="placeBet(this)"><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:3/3"></div></div><div class="en" style="font-size:11px;">DOUBLE<br>TWO</div><div class="cn" style="font-size:13px;">雙二</div><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:3/3"></div></div></div>
+                                <div class="cell-v" data-type="Double1" onclick="placeBet(this)"><div class="dice-box"><div class="d b" style="grid-area:2/2"></div></div><div class="en" style="font-size:11px;">DOUBLE<br>ONE</div><div class="cn" style="font-size:13px;">雙一</div><div class="dice-box"><div class="d b" style="grid-area:2/2"></div></div></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="cell side-cell" data-type="Big" onclick="placeBet(this)">
-                    <div class="en" style="font-size:22px;">BIG</div>
-                    <div class="en" style="font-size:12px;">ARE NUMBERS 11 TO 17</div>
-                    <div class="en" style="font-size:12px; color:#666;">11點至17點</div>
-                    <div class="odds-line" style="font-size: 18px;">1 WINS 1</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">一賠一</div>
-                    <div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
-                    <div class="big-word">大</div>
+                    <div class="en" style="font-size:22px;">BIG</div><div class="en" style="font-size:12px;">ARE NUMBERS 11 TO 17</div><div class="en" style="font-size:12px; color:#666;">11點至17點</div><div class="odds-line" style="font-size: 18px;">1 WINS 1</div><div class="en" style="font-size:12px; color:#c42020;">一賠一</div><div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div><div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div><div class="big-word">大</div>
                 </div>
             </div>
             <div class="main-row row-combo">
                 <div class="cell side-cell" data-type="Small" onclick="placeBet(this)">
-                    <div class="en" style="font-size:22px;">SMALL</div>
-                    <div class="en" style="font-size:12px;">ARE NUMBERS 4 TO 10</div>
-                    <div class="en" style="font-size:12px; color:#666;">4點至10點</div>
-                    <div class="odds-line" style="font-size: 18px;">1 WINS 1</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">一賠一</div>
-                    <div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
-                    <div class="big-word">小</div>
+                    <div class="en" style="font-size:22px;">SMALL</div><div class="en" style="font-size:12px;">ARE NUMBERS 4 TO 10</div><div class="en" style="font-size:12px; color:#666;">4點至10點</div><div class="odds-line" style="font-size: 18px;">1 WINS 1</div><div class="en" style="font-size:12px; color:#c42020;">一賠一</div><div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div><div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div><div class="big-word">小</div>
                 </div>
                 <div class="center-container">
                     <div class="grid-combo">
@@ -410,14 +287,7 @@
                     </div>
                 </div>
                 <div class="cell side-cell" data-type="Small" onclick="placeBet(this)">
-                    <div class="en" style="font-size:22px;">SMALL</div>
-                    <div class="en" style="font-size:12px;">ARE NUMBERS 4 TO 10</div>
-                    <div class="en" style="font-size:12px; color:#666;">4點至10點</div>
-                    <div class="odds-line" style="font-size: 18px;">1 WINS 1</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">一賠一</div>
-                    <div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div>
-                    <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
-                    <div class="big-word">小</div>
+                    <div class="en" style="font-size:22px;">SMALL</div><div class="en" style="font-size:12px;">ARE NUMBERS 4 TO 10</div><div class="en" style="font-size:12px; color:#666;">4點至10點</div><div class="odds-line" style="font-size: 18px;">1 WINS 1</div><div class="en" style="font-size:12px; color:#c42020;">一賠一</div><div class="en" style="font-size:11px;">LOSE IF ANY TRIPLE APPEARS</div><div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div><div class="big-word">小</div>
                 </div>
             </div>
             <div class="row-sums">
@@ -444,9 +314,7 @@
                 <div class="cell single-dice-cell" data-type="Single2" onclick="placeBet(this)"><div class="large-dice"><div class="large-d b" style="grid-area:1/1"></div><div class="large-d b" style="grid-area:3/3"></div></div></div>
                 <div class="cell single-dice-cell" data-type="Single1" onclick="placeBet(this)"><div class="large-dice"><div class="large-d b" style="grid-area:2/2"></div></div></div>
             </div>
-            <div class="footer">
-                1 TO 1 ON ONE DICE 一顆骰子相同一賠一 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2 TO 1 ON TWO DICE 二顆骰子相同一賠二 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3 TO 1 ON THREE DICE 三顆骰子相同一賠三
-            </div>
+            <div class="footer">1 TO 1 ON ONE DICE 一顆骰子相同一賠一 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2 TO 1 ON TWO DICE 二顆骰子相同一賠二 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3 TO 1 ON THREE DICE 三顆骰子相同一賠三</div>
         </div>
     </div>
 
@@ -455,7 +323,7 @@
         <button class="btn-zoom" onclick="zoomOut()">-</button>
         <button class="btn-zoom reset" onclick="resetZoom()">重置</button>
     </div>
-    <script>
+        <script>
         let userScale = 1;
         function updateBoardScale() {
             const container = document.getElementById('boardContainer');
@@ -801,16 +669,23 @@
             updateBoardScale(); clampPanelPosition(); applyPanelPosition(); clampPosition(); applyBoardPosition();
         });
 
-        /* --- 新增：可上下拖動的黃金分割線與按比例縮放邏輯 --- */
+        /* --- 優化後的可上下拖動黃金分割線邏輯 --- */
         let isSplitDragging = false;
-        let splitStartY = 0;
-        let initialTopScale = 1;
-        let initialUserScale = 1;
-        let initialTopHeight = 0;
+        let startY = 0;
+        let startTopHeight = 0;
+        let startUserScale = 1;
+        let baseTopHeight = 0; 
 
         const splitter = document.getElementById('splitter');
         const topSection = document.getElementById('topSection');
-        const mainPlayArea = document.querySelector('.main-play-area');
+        const mainPlayArea = document.getElementById('mainPlayArea');
+
+        // 記錄上方區塊的自然高度基準
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                baseTopHeight = topSection.offsetHeight;
+            }, 200);
+        });
 
         splitter.addEventListener('mousedown', startSplitDrag);
         splitter.addEventListener('touchstart', startSplitDrag, { passive: false });
@@ -822,43 +697,44 @@
         function startSplitDrag(e) {
             if (e.type === 'mousedown' && e.button !== 0) return;
             isSplitDragging = true;
-            splitStartY = e.touches ? e.touches[0].clientY : e.clientY;
+            const point = e.touches ? e.touches[0] : e;
+            startY = point.clientY;
             
-            const currentTransform = mainPlayArea.style.transform;
-            if (currentTransform && currentTransform.includes('scale(')) {
-                initialTopScale = parseFloat(currentTransform.match(/scale\(([^)]+)\)/)[1]);
-            } else {
-                initialTopScale = 1;
-            }
+            if (baseTopHeight === 0) baseTopHeight = topSection.offsetHeight;
             
-            initialUserScale = userScale;
-            initialTopHeight = topSection.offsetHeight;
+            startTopHeight = topSection.offsetHeight;
+            startUserScale = userScale;
+
             document.body.style.cursor = 'ns-resize';
             if (e.cancelable) e.preventDefault();
         }
 
         function doSplitDrag(e) {
             if (!isSplitDragging) return;
-            const currentY = e.touches ? e.touches[0].clientY : e.clientY;
-            const deltaY = currentY - splitStartY;
+            const point = e.touches ? e.touches[0] : e;
+            const currentY = point.clientY;
+            // 計算滑鼠位移
+            const deltaY = currentY - startY;
 
-            // 向上推 (deltaY < 0) -> 上方縮小，下方放大
-            // 向下推 (deltaY > 0) -> 上方放大，下方縮小
-            const scaleChange = deltaY / 300; 
-
-            // 限制縮放範圍，避免介面過大或過小
-            let newTopScale = Math.max(0.3, Math.min(2.0, initialTopScale + scaleChange));
-            let newUserScale = Math.max(0.5, Math.min(3.0, initialUserScale - scaleChange));
-
-            // 應用上方縮放
-            mainPlayArea.style.transform = `scale(${newTopScale})`;
-            mainPlayArea.style.transformOrigin = 'center center';
+            // 1. 上方高度精準跟隨滑鼠（消除走位）
+            let newHeight = startTopHeight + deltaY;
+            // 限制上方高度範圍 (原高度的 30% 到 160%)
+            newHeight = Math.max(baseTopHeight * 0.3, Math.min(baseTopHeight * 1.6, newHeight));
             
-            // 動態調整上方容器高度以騰出空間，避免與下方重疊
-            topSection.style.height = Math.max(80, initialTopHeight * newTopScale) + 'px';
+            // 計算對應的縮放比例
+            let newTopScale = newHeight / baseTopHeight;
+            
+            // 2. 聯動下方縮放 (根據滑鼠移動量平滑過渡，靈敏度系數 0.002)
+            let newUserScale = startUserScale - deltaY * 0.002;
+            // 限制下方縮放範圍 (0.5 到 2.2)
+            newUserScale = Math.max(0.5, Math.min(2.2, newUserScale));
+
+            // 3. 應用樣式更新
+            topSection.style.height = newHeight + 'px';
             topSection.style.overflow = 'hidden';
             
-            // 同步更新下方縮放
+            mainPlayArea.style.transform = `scale(${newTopScale})`;
+            
             userScale = newUserScale;
             updateBoardScale();
 
