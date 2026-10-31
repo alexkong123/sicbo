@@ -323,7 +323,8 @@
         <button class="btn-zoom" onclick="zoomOut()">-</button>
         <button class="btn-zoom reset" onclick="resetZoom()">重置</button>
     </div>
-        <script>
+
+    <script>
         let userScale = 1;
         function updateBoardScale() {
             const container = document.getElementById('boardContainer');
@@ -465,13 +466,29 @@
                 historyPanel.appendChild(div);
             });
         }
+        
+        // 已修復重疊問題：九宮格分佈 + 微小隨機偏移
         function positionDiceRandomly() {
-            const positions = [{ top: '25%', left: '15%', rot: -15 }, { top: '25%', left: '55%', rot: 20 }, { top: '55%', left: '25%', rot: 10 }, { top: '55%', left: '60%', rot: -25 }, { top: '40%', left: '40%', rot: 45 }, { top: '15%', left: '40%', rot: 5 }, { top: '65%', left: '40%', rot: -10 }].sort(() => Math.random() - 0.5);
+            const pool = [
+                { x: 20, y: 20 }, { x: 90, y: 15 }, { x: 160, y: 20 },
+                { x: 15, y: 90 }, { x: 90, y: 90 }, { x: 165, y: 90 },
+                { x: 20, y: 160 }, { x: 90, y: 165 }, { x: 160, y: 160 }
+            ];
+            pool.sort(() => Math.random() - 0.5);
+            
             diceEls.forEach((el, index) => {
-                el.style.top = positions[index].top; el.style.left = positions[index].left;
-                el.style.transform = `rotate(${positions[index].rot}deg)`; el.style.zIndex = 1; 
+                let p = pool[index];
+                let randomX = p.x + (Math.random() * 10 - 5);
+                let randomY = p.y + (Math.random() * 10 - 5);
+                let rot = Math.floor(Math.random() * 60) - 30;
+
+                el.style.top = randomY + 'px'; 
+                el.style.left = randomX + 'px';
+                el.style.transform = `rotate(${rot}deg)`; 
+                el.style.zIndex = 1; 
             });
         }
+
         function positionDiceStacked() {
             diceEls[0].style.cssText = 'top:35%;left:40%;transform:rotate(15deg);z-index:3;';
             diceEls[1].style.cssText = 'top:38%;left:45%;transform:rotate(-10deg);z-index:2;';
@@ -669,7 +686,7 @@
             updateBoardScale(); clampPanelPosition(); applyPanelPosition(); clampPosition(); applyBoardPosition();
         });
 
-        /* --- 優化後的可上下拖動黃金分割線邏輯 --- */
+        /* --- 可上下拖動的黃金分割線邏輯 --- */
         let isSplitDragging = false;
         let startY = 0;
         let startTopHeight = 0;
@@ -680,7 +697,6 @@
         const topSection = document.getElementById('topSection');
         const mainPlayArea = document.getElementById('mainPlayArea');
 
-        // 記錄上方區塊的自然高度基準
         window.addEventListener('load', () => {
             setTimeout(() => {
                 baseTopHeight = topSection.offsetHeight;
@@ -713,23 +729,16 @@
             if (!isSplitDragging) return;
             const point = e.touches ? e.touches[0] : e;
             const currentY = point.clientY;
-            // 計算滑鼠位移
             const deltaY = currentY - startY;
 
-            // 1. 上方高度精準跟隨滑鼠（消除走位）
             let newHeight = startTopHeight + deltaY;
-            // 限制上方高度範圍 (原高度的 30% 到 160%)
             newHeight = Math.max(baseTopHeight * 0.3, Math.min(baseTopHeight * 1.6, newHeight));
             
-            // 計算對應的縮放比例
             let newTopScale = newHeight / baseTopHeight;
             
-            // 2. 聯動下方縮放 (根據滑鼠移動量平滑過渡，靈敏度系數 0.002)
             let newUserScale = startUserScale - deltaY * 0.002;
-            // 限制下方縮放範圍 (0.5 到 2.2)
             newUserScale = Math.max(0.5, Math.min(2.2, newUserScale));
 
-            // 3. 應用樣式更新
             topSection.style.height = newHeight + 'px';
             topSection.style.overflow = 'hidden';
             
