@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>骰寶模擬器 - 保留中獎籌碼版</title>
+<title>骰寶模擬器</title>
 <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial','Microsoft JhengHei',sans-serif}
     body{background-color:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:0;overflow-x:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
@@ -438,7 +438,7 @@
             if(suppressClick){ e.stopPropagation(); e.preventDefault(); suppressClick = false; }
         }, true);
 
-        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 10, enteredPassword = '';
+        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 5, enteredPassword = '';
         const messageEl = document.getElementById('messageDisplay'), shakerCover = document.getElementById('shakerCover'), shakerContainer = document.getElementById('shakerContainer'), shakerBase = document.getElementById('shakerBase'), diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')], tableBoard = document.getElementById('tableBoard'), historyPanel = document.getElementById('historyPanel'), startBtn = document.getElementById('startBtn'), actionGroup = document.getElementById('actionGroup'), numpadContainer = document.getElementById('numpadContainer'), confirmVoidGroup = document.getElementById('confirmVoidGroup'), resultDisplay = document.getElementById('resultDisplay'), countdownOverlay = document.getElementById('countdownOverlay'), dimOverlay = document.getElementById('dimOverlay');
         const diceDots = { 1: [5], 2: [3, 7], 3: [3, 5, 7], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
         
@@ -467,23 +467,26 @@
             });
         }
         
-        // 已修復重疊問題：九宮格分佈 + 微小隨機偏移
+        // 採用極坐標（圓形分佈），確保絕對不會超出底盤邊界
         function positionDiceRandomly() {
-            const pool = [
-                { x: 20, y: 20 }, { x: 90, y: 15 }, { x: 160, y: 20 },
-                { x: 15, y: 90 }, { x: 90, y: 90 }, { x: 165, y: 90 },
-                { x: 20, y: 160 }, { x: 90, y: 165 }, { x: 160, y: 160 }
-            ];
-            pool.sort(() => Math.random() - 0.5);
+            const points = [];
+            const startAngle = Math.random() * Math.PI * 2;
+            
+            for (let i = 0; i < 3; i++) {
+                const angle = startAngle + i * (Math.PI * 2 / 3);
+                const r = 45 + Math.random() * 15; // 半徑 45~60
+                
+                const px = 110 + Math.cos(angle) * r - 20; 
+                const py = 110 + Math.sin(angle) * r - 20;
+                points.push({ x: px, y: py });
+            }
             
             diceEls.forEach((el, index) => {
-                let p = pool[index];
-                let randomX = p.x + (Math.random() * 10 - 5);
-                let randomY = p.y + (Math.random() * 10 - 5);
-                let rot = Math.floor(Math.random() * 60) - 30;
+                let p = points[index];
+                let rot = Math.floor(Math.random() * 90) - 45; 
 
-                el.style.top = randomY + 'px'; 
-                el.style.left = randomX + 'px';
+                el.style.top = p.y + 'px'; 
+                el.style.left = p.x + 'px';
                 el.style.transform = `rotate(${rot}deg)`; 
                 el.style.zIndex = 1; 
             });
@@ -573,7 +576,7 @@
             tableBoard.classList.remove('betting-active');
             document.querySelectorAll('.chip').forEach(el => el.style.opacity = 0.5);
             dimOverlay.style.display = 'block';
-            countdownValue = 10; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
+            countdownValue = 5; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
             showMessage("停止下注，準備開盅...", "#ffd700");
             countdownTimer = setInterval(() => {
                 countdownValue--;
