@@ -5,579 +5,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>骰寶模擬器 - 保留中獎籌碼版</title>
 <style>
-    /* ================= 基礎設定 ================= */
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        font-family: 'Arial', 'Microsoft JhengHei', sans-serif;
-    }
-
-    body {
-        background-color: #1a1a1a;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start; 
-        min-height: 100vh;
-        padding: 0; 
-        overflow-x: hidden;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-    }
-
-    /* ================= 上方：互動區 ================= */
-    .top-section {
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        gap: 30px;
-        padding: 20px 10px; 
-        background: radial-gradient(circle, #333 0%, #111 100%);
-        border-bottom: 4px solid #b89847;
-        flex-shrink: 0;
-        position: relative; 
-    }
-
-    /* 歷史記錄面板 (桌面版) */
-    .history-panel {
-        width: 220px;
-        height: 280px;
-        background: rgba(0, 0, 0, 0.6);
-        border: 2px solid #b89847;
-        border-radius: 10px;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        overflow-y: auto;
-        box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
-    }
-
-    .history-panel::-webkit-scrollbar { width: 6px; }
-    .history-panel::-webkit-scrollbar-thumb { background: #b89847; border-radius: 3px; }
-
-    .history-panel h3 {
-        color: #b89847;
-        font-size: 14px;
-        text-align: center;
-        margin-bottom: 5px;
-        border-bottom: 1px solid #444;
-        padding-bottom: 5px;
-    }
-
-    .history-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #222;
-        padding: 5px 8px;
-        border-radius: 6px;
-        border-left: 4px solid #555;
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateX(-10px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-
-    .h-dice-group { display: flex; gap: 4px; }
-
-    .h-dice {
-        width: 22px; height: 22px; background-color: #c83232; border-radius: 4px;
-        display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 3px;
-        box-shadow: inset -1px -1px 2px rgba(0,0,0,0.3);
-    }
-    .h-dot { background-color: white; border-radius: 50%; width: 3px; height: 3px; align-self: center; justify-self: center; }
-
-    .h-result { font-size: 14px; font-weight: bold; color: white; }
-    .h-result.triple { color: #ffd700; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
-
-    /* 骰盅與按鈕區域 */
-    .main-play-area {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .message {
-        color: #ffd700; 
-        font-size: 24px;
-        font-weight: bold;
-        text-shadow: 0 0 10px rgba(0,0,0,0.5); 
-        transition: opacity 0.3s;
-        margin-top: 10px;
-        margin-bottom: 15px;
-        text-align: center;
-        z-index: 10;
-    }
-
-    .shaker-container {
-        position: relative;
-        width: 240px;
-        height: 240px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 10px 0;
-    }
-
-    .shaker-base {
-        width: 220px;
-        height: 220px;
-        background: radial-gradient(circle at center, #2a2a2a 0%, #111 100%);
-        border-radius: 50%;
-        border: 3px solid #333;
-        box-shadow: 0 0 20px rgba(0, 255, 0, 0.1), inset 0 0 20px rgba(0, 255, 0, 0.05);
-        position: relative;
-        z-index: 1;
-        overflow: hidden; 
-        transition: box-shadow 0.5s ease, border-color 0.5s ease;
-    }
-
-    .shaker-base.glow-green {
-        box-shadow: 0 0 50px rgba(0, 255, 0, 0.6), inset 0 0 40px rgba(0, 255, 0, 0.4);
-        border-color: #00ff00;
-    }
-
-    .shaker-base.glow-red {
-        box-shadow: 0 0 60px rgba(255, 0, 0, 0.8), inset 0 0 50px rgba(255, 0, 0, 0.5);
-        border-color: #ff0000;
-    }
-
-    .dice {
-        position: absolute;
-        width: 40px; height: 40px; background-color: #d13030; border-radius: 6px;
-        display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 5px;
-        box-shadow: 0 5px 10px rgba(0,0,0,0.6), inset 0 0 5px rgba(0,0,0,0.5);
-        opacity: 0; 
-        transition: opacity 0.3s, top 0.5s, left 0.5s, transform 0.5s;
-    }
-    .dot { background-color: white; border-radius: 50%; width: 6px; height: 6px; align-self: center; justify-self: center; }
-
-    .shaker-cover {
-        position: absolute;
-        top: 0; left: 0; width: 240px; height: 240px;
-        background: radial-gradient(circle at 30% 30%, #fceabb 0%, #f8b500 40%, #b87333 100%);
-        border-radius: 50%;
-        box-shadow: inset -10px -10px 25px rgba(139, 69, 19, 0.6), inset 10px 10px 20px rgba(255, 255, 255, 0.4), 0 15px 35px rgba(0,0,0,0.8);
-        z-index: 3;
-        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex; justify-content: center; align-items: center;
-    }
-    .shaker-cover::before {
-        content: '';
-        width: 60px; height: 60px;
-        background: radial-gradient(circle at 30% 30%, #fff5cc, #e6a817, #995c14);
-        border-radius: 50%;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -5px 10px rgba(0,0,0,0.3);
-    }
-
-    .shaker-cover.open {
-        transform: translateY(-250px) scale(0.7) rotate(15deg);
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    @keyframes shake {
-        0% { transform: translate(2px, 2px) rotate(0deg); }
-        10% { transform: translate(-2px, -4px) rotate(-2deg); }
-        20% { transform: translate(-5px, 0px) rotate(2deg); }
-        30% { transform: translate(5px, 4px) rotate(0deg); }
-        40% { transform: translate(2px, -2px) rotate(2deg); }
-        50% { transform: translate(-2px, 4px) rotate(-2deg); }
-        60% { transform: translate(-5px, 2px) rotate(0deg); }
-        70% { transform: translate(5px, 2px) rotate(-2deg); }
-        80% { transform: translate(-2px, -2px) rotate(2deg); }
-        90% { transform: translate(2px, 4px) rotate(0deg); }
-        100% { transform: translate(2px, -4px) rotate(-2deg); }
-    }
-    .shaking { animation: shake 0.4s infinite; }
-
-    .controls {
-        display: flex;
-        gap: 15px;
-        z-index: 10;
-        justify-content: center;
-        width: 100%;
-        max-width: 600px;
-    }
-    .btn {
-        padding: 15px 20px;
-        font-size: 20px;
-        font-weight: bold;
-        border: none;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.6);
-        flex: 1;
-    }
-    .btn:disabled {
-        background: #444 !important;
-        color: #777 !important;
-        cursor: not-allowed;
-        box-shadow: none;
-        transform: scale(0.95);
-    }
-    .btn-roll { background: linear-gradient(to bottom, #fceabb, #f8b500); color: #333; }
-    .btn-open { background: linear-gradient(to bottom, #ff7e5f, #feb47b); color: #333; }
-    .btn-clear { background: #555; color: white; }
-
-    /* ================= 懸浮籌碼板 ================= */
-    .chip-board {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        align-items: center;
-        background: rgba(0, 0, 0, 0.7);
-        padding: 12px 20px;
-        border-radius: 50px;
-        border: 2px solid #b89847;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        z-index: 1000;
-    }
-
-    .chip {
-        width: 55px;
-        height: 55px;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 14px;
-        font-weight: bold;
-        color: white;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-        border: 3px solid transparent;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    }
-
-    .chip:hover { transform: translateY(-3px); }
-    .chip.active {
-        border-color: #fff;
-        transform: translateY(-8px) scale(1.1);
-        box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 8px 15px rgba(0,0,0,0.6);
-    }
-
-    .chip-10000 { background: radial-gradient(circle at 30% 30%, #f1c40f, #d4ac0d); color: #333; text-shadow: none; } 
-    .chip-5000 { background: radial-gradient(circle at 30% 30%, #555, #222); } 
-    .chip-1000 { background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60); } 
-    .chip-500 { background: radial-gradient(circle at 30% 30%, #4a90e2, #2980b9); } 
-    .chip-100 { background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b); } 
-
-    /* ================= 下方：投注區 ================= */
-    .board-container {
-        width: 100%;
-        max-width: 1600px;
-        position: relative;
-        margin: 20px 0 120px 0; 
-    }
-
-    .table-board {
-        width: 1800px;
-        height: 960px; 
-        background-color: #15472b;
-        border: 8px solid #b89847;
-        border-radius: 8px;
-        padding: 10px;
-        position: absolute;
-        top: 0; left: 50%;
-        transform: translateX(-50%) scale(var(--scale, 1));
-        transform-origin: top center;
-        display: flex;
-        flex-direction: column;
-        gap: 8px; 
-    }
-
-    .cell {
-        background-color: #fcf9f2;
-        border: 2px solid #b89847;
-        border-radius: 6px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        color: #222;
-        position: relative;
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial','Microsoft JhengHei',sans-serif}
+    body{background-color:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:0;overflow-x:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+    .top-section{width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:30px;padding:20px 10px;background:radial-gradient(circle,#333 0%,#111 100%);border-bottom:4px solid #b89847;flex-shrink:0;position:relative}
+    .history-panel{width:220px;height:280px;background:rgba(0,0,0,.6);border:2px solid #b89847;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;box-shadow:inset 0 0 15px rgba(0,0,0,.8);position:absolute;left:30px;z-index:20}
+    .history-panel::-webkit-scrollbar{width:6px;height:6px}
+    .history-panel::-webkit-scrollbar-thumb{background:#b89847;border-radius:3px}
+    .history-panel h3{color:#b89847;font-size:14px;text-align:center;margin-bottom:5px;border-bottom:1px solid #444;padding-bottom:5px;flex-shrink:0}
+    .history-item{display:flex;justify-content:space-between;align-items:center;background:#222;padding:5px 8px;border-radius:6px;border-left:4px solid #555;animation:fadeIn .3s ease-out;flex-shrink:0}
+    @keyframes fadeIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+    .h-dice-group{display:flex;gap:4px;flex-shrink:0}
+    .h-dice{width:22px;height:22px;background-color:#c83232;border-radius:4px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:3px;box-shadow:inset -1px -1px 2px rgba(0,0,0,.3);flex-shrink:0}
+    .h-dot{background-color:#fff;border-radius:50%;width:3px;height:3px;align-self:center;justify-self:center}
+    .h-result{font-size:14px;font-weight:bold;color:#fff;flex-shrink:0}
+    .h-result.triple{color:#ffd700;text-shadow:0 0 5px rgba(255,215,0,.5)}
+    .main-play-area{display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;width:100%}
+    .message{color:#ffd700;font-size:20px;font-weight:bold;text-shadow:0 0 10px rgba(0,0,0,.5);transition:opacity .3s;margin-top:15px;margin-bottom:10px;text-align:center;z-index:10;min-height:24px}
+    .shaker-container{position:relative;width:240px;height:240px;display:flex;justify-content:center;align-items:center;transform:scale(.85);margin:-18px}
+    .shaker-base{width:220px;height:220px;background:radial-gradient(circle at center,#2a2a2a 0%,#111 100%);border-radius:50%;border:3px solid #333;box-shadow:0 0 20px rgba(0,255,0,.1),inset 0 0 20px rgba(0,255,0,.05);position:relative;z-index:1;overflow:hidden;transition:box-shadow .5s ease,border-color .5s ease}
+    .shaker-base.glow-green{box-shadow:0 0 50px rgba(0,255,0,.6),inset 0 0 40px rgba(0,255,0,.4);border-color:#00ff00}
+    .shaker-base.glow-red{box-shadow:0 0 60px rgba(255,0,0,.8),inset 0 0 50px rgba(255,0,0,.5);border-color:#ff0000}
+    .dice{position:absolute;width:40px;height:40px;background-color:#d13030;border-radius:6px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;box-shadow:0 5px 10px rgba(0,0,0,.6),inset 0 0 5px rgba(0,0,0,.5);opacity:0;transition:opacity .3s,top .5s,left .5s,transform .5s}
+    .dot{background-color:#fff;border-radius:50%;width:6px;height:6px;align-self:center;justify-self:center}
+    .shaker-cover{position:absolute;top:0;left:0;width:240px;height:240px;background:radial-gradient(circle at 30% 30%,#fceabb 0%,#f8b500 40%,#b87333 100%);border-radius:50%;box-shadow:inset -10px -10px 25px rgba(139,69,19,.6),inset 10px 10px 20px rgba(255,255,255,.4),0 15px 35px rgba(0,0,0,.8);z-index:3;transition:all .6s cubic-bezier(.4,0,.2,1);display:flex;justify-content:center;align-items:center}
+    .shaker-cover::before{content:'';width:60px;height:60px;background:radial-gradient(circle at 30% 30%,#fff5cc,#e6a817,#995c14);border-radius:50%;box-shadow:0 10px 20px rgba(0,0,0,.6),inset 0 -5px 10px rgba(0,0,0,.3)}
+    .shaker-cover.open{transform:translateY(-250px) scale(.7) rotate(15deg);opacity:0;pointer-events:none}
+    @keyframes shake{0%{transform:translate(2px,2px) rotate(0)}10%{transform:translate(-2px,-4px) rotate(-2deg)}20%{transform:translate(-5px,0) rotate(2deg)}30%{transform:translate(5px,4px) rotate(0)}40%{transform:translate(2px,-2px) rotate(2deg)}50%{transform:translate(-2px,4px) rotate(-2deg)}60%{transform:translate(-5px,2px) rotate(0)}70%{transform:translate(5px,2px) rotate(-2deg)}80%{transform:translate(-2px,-2px) rotate(2deg)}90%{transform:translate(2px,4px) rotate(0)}100%{transform:translate(2px,-4px) rotate(-2deg)}}
+    .shaking{animation:shake .4s infinite}
+    .display-panel{position:fixed;top:0;left:0;width:100px;height:160px;background-color:#0a0a0a;border:3px solid #333;border-radius:10px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:12px 8px;box-shadow:0 0 20px rgba(0,0,0,.8),inset 0 0 15px rgba(255,255,255,.05);z-index:999;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transform:translate(0,0);transition:box-shadow .2s}
+    .display-panel.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none}
+    .display-panel.dragging .btn-panel,.display-panel.dragging .numpad-btn{cursor:grabbing}
     
-    .table-board.betting-active .cell:hover { background-color: #fff8e7; }
-    .table-board:not(.betting-active) .cell { cursor: not-allowed; opacity: 0.85; }
-
-    .bet-active { 
-        background-color: #ffe4e1 !important; 
-        border-color: #ff3b3b !important;
-        box-shadow: inset 0 0 0 4px #ff3b3b !important; 
-    }
+    /* 縮小結果顯示區的字體與字距，避免超出邊界 */
+    .result-display{font-size:16px;font-weight:bold;color:#fff;text-align:center;height:30px;display:flex;justify-content:center;align-items:center;font-family:'Courier New',Courier,monospace;text-shadow:0 0 10px rgba(255,255,255,.6);letter-spacing:1px;width:100%;white-space:pre}
     
-    .win-cell {
-        background-color: #fffacd !important;
-        box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700 !important;
-        border-color: #ffd700 !important;
-        z-index: 10;
-    }
-
-    .bet-mark {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 40px; height: 40px;
-        background: #ff3b3b;
-        color: white;
-        border-radius: 50%;
-        display: flex; justify-content: center; align-items: center;
-        font-size: 14px; font-weight: bold;
-        box-shadow: 1px 1px 5px rgba(0,0,0,0.6);
-        z-index: 5;
-        text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
-    }
-
-    .en { font-size: 13px; font-weight: bold; line-height: 1.1; color: #333; }
-    .cn { font-size: 14px; font-weight: bold; color: #222; }
-    .big-word { font-size: 85px; font-weight: normal; color: #b89847; font-family: 'Times New Roman', 'SimSun', serif; line-height: 1; text-shadow: 2px 2px 3px rgba(0,0,0,0.2); margin-top: 5px; }
-    .num-word { font-size: 54px; font-weight: bold; color: #b89847; font-family: 'Times New Roman', serif; font-style: italic; line-height: 1; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-    .odds-line { font-size: 14px; color: #c42020; font-weight: bold; line-height: 1.2; }
-
-    .dice-box {
-        width: 34px; height: 34px; background-color: #c83232; border-radius: 6px;
-        display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 5px;
-        box-shadow: inset -1px -1px 3px rgba(0,0,0,0.3), 1px 1px 2px rgba(0,0,0,0.4);
-        flex-shrink: 0;
-    }
-    .d { border-radius: 50%; width: 6px; height: 6px; align-self: center; justify-self: center; }
-    .w { background-color: white; }
-    .b { background-color: #1a237e; }
-
-    .large-dice {
-        width: 100px; height: 100px; background-color: #c83232; border-radius: 10px;
-        display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 10px; margin: auto;
-        box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
-        aspect-ratio: 1 / 1; flex-shrink: 0;
-    }
-    .large-d { border-radius: 50%; width: 16px; height: 16px; align-self: center; justify-self: center; }
-
-    .main-row { display: flex; gap: 8px; width: 100%; }
-    .side-cell { width: 175px; flex-shrink: 0; padding: 15px 10px; display: flex; flex-direction: column; justify-content: space-evenly; gap: 8px; position: relative; }
-    .center-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .grid-16 { display: grid; grid-template-columns: repeat(16, 1fr); gap: 8px; width: 100%; height: 100%; }
-    .span-3 { grid-column: span 3; }
-    .span-4 { grid-column: span 4; }
-
-    .row-top { height: 305px; flex-shrink: 0; }
-    .top-group { display: flex; flex-direction: column; gap: 4px; height: 100%; }
-    .top-title { background: linear-gradient(to bottom, #ebd197, #d4af37); border: 2px solid #b89847; border-bottom: none; border-radius: 6px 6px 0 0; text-align: center; padding: 4px 0; font-size: 14px; font-weight: bold; color: #333; height: 32px; display: flex; justify-content: center; align-items: center; box-sizing: border-box; }
-    .top-cells-row { flex: 1; display: flex; gap: 6px; height: calc(100% - 36px); }
+    .panel-controls{width:100%;flex:1;position:relative;display:flex;justify-content:center;align-items:center}
+    .btn-panel{border:none;cursor:pointer;color:#fff;font-weight:bold;box-shadow:0 4px 10px rgba(0,0,0,.5);border-radius:6px;transition:all .2s;text-align:center;box-sizing:border-box}
+    .btn-panel:disabled{background:#444!important;color:#777!important;cursor:not-allowed;box-shadow:none}
+    .btn-start{background:linear-gradient(to bottom,#2ecc71,#27ae60);position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:16px}
+    .btn-start span{font-size:10px;font-weight:normal;margin-top:4px}
+    #actionGroup{display:none;flex-direction:column;gap:6px;width:100%;height:100%;position:absolute;top:0;left:0}
+    .btn-nomore{background:linear-gradient(to bottom,#e74c3c,#c0392b);flex:3;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:12px}
+    .btn-nomore span{font-size:10px;font-weight:normal;margin-top:2px}
+    .btn-void-top{background:linear-gradient(to bottom,#7f8c8d,#95a5a6);flex:2;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:13px}
+    .btn-void-top span{font-size:9px;font-weight:normal;margin-top:2px}
     
-    .cell-v { 
-        flex: 1; background-color: #fcf9f2; border: 2px solid #b89847; border-radius: 6px; 
-        display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; 
-        padding: 5px 2px; height: 100%; cursor: pointer; 
-        position: relative; 
-        transition: all 0.2s ease;
-    }
-    
-    .top-cells-col { flex: 1; display: flex; flex-direction: column; gap: 6px; height: calc(100% - 36px); }
-    
-    .cell-h { 
-        flex: 1; background-color: #fcf9f2; border: 2px solid #b89847; border-radius: 6px; 
-        display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; 
-        padding: 4px; width: 100%; cursor: pointer; 
-        position: relative; 
-        transition: all 0.2s ease;
-    }
+    /* 數字鍵盤 - 恢復原本的舒適間距 */
+    #numpadContainer{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:#0a0a0a;z-index:10;padding:2px;box-sizing:border-box;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:3px;border-radius:6px}
+    .numpad-btn{background:#333;color:#fff;border:1px solid #444;border-radius:4px;font-size:14px;font-weight:bold;cursor:pointer;display:flex;justify-content:center;align-items:center;padding:0;user-select:none}
+    .numpad-btn:active{background:#555}
 
-    .any-triple-cell { background-color: #15472b; color: white; justify-content: center; gap: 10px; height: calc(100% - 36px); border-radius: 6px; position: relative; border: 2px solid #b89847; overflow: hidden; cursor: pointer; transition: all 0.2s ease; }
-    .any-text-en { font-size: 34px; font-weight: bold; color: #e2c270; line-height: 1.1; letter-spacing: 2px; text-align: center; z-index: 2; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-    .any-text-cn { font-size: 38px; font-weight: bold; color: white; text-align: center; z-index: 2; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-    
-    .bg-dice-group { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 1; transform: scale(0.85); }
-    .bg-dice-row { display: flex; gap: 6px; }
-    .dice-stack { display: flex; flex-direction: column; gap: 6px; align-items: center; }
-    .dice-row { display: flex; flex-direction: row; gap: 4px; justify-content: center; }
-    .label-row { display: flex; justify-content: center; align-items: baseline; gap: 6px; margin-top: 2px; }
-
-    .row-combo { height: 305px; flex-shrink: 0; }
-    .grid-combo { display: grid; grid-template-columns: 75px repeat(15, 1fr); gap: 8px; width: 100%; height: 100%; }
-    .combo-left-bar { background: linear-gradient(to bottom, #ebd197, #d4af37); border: 2px solid #b89847; border-radius: 6px; display: flex; justify-content: center; align-items: center; text-align: center; font-size: 12px; font-weight: bold; color: #333; line-height: 1.2; padding: 2px; }
-    
-    .combo-cell { 
-        padding: 8px 2px; justify-content: space-evenly; 
-        position: relative; 
-    }
-
-    .row-sums { display: flex; gap: 8px; height: 130px; flex-shrink: 0; margin-top: 4px; }
-    .sum-cell { flex: 1; justify-content: center; gap: 4px; position: relative; }
-
-    .row-single-dice { display: flex; gap: 8px; height: 130px; flex-shrink: 0; }
-    .single-dice-cell { flex: 1; padding: 10px; position: relative; }
-
-    .footer { height: 30px; background: linear-gradient(to bottom, #ebd197, #d4af37); border: 2px solid #b89847; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; color: #333; white-space: nowrap; flex-shrink: 0; margin-top: 4px; }
-
-    /* ================= 縮放控制按鈕 ================= */
-    .zoom-controls {
-        position: fixed;
-        bottom: 90px; 
-        right: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        z-index: 1000;
-    }
-    .btn-zoom {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: rgba(0,0,0,0.8);
-        color: white;
-        border: 2px solid #b89847;
-        font-size: 24px;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        transition: all 0.2s;
-        user-select: none;
-    }
-    .btn-zoom:hover { background: #b89847; color: #111; }
-    .btn-zoom.reset { font-size: 14px; }
-
-    /* ================= 響應式佈局 (手機端終極優化) ================= */
-    @media (max-width: 768px) {
-        .top-section {
-            padding: 15px 10px;
-            flex-direction: column; 
-            gap: 10px;
-        }
-
-        .history-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 110px; 
-            height: auto;
-            max-height: 200px; 
-            padding: 6px;
-            gap: 5px;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.8);
-        }
-        
-        .history-panel h3 {
-            font-size: 11px;
-            margin-bottom: 3px;
-            padding-bottom: 3px;
-        }
-
-        .history-item {
-            padding: 3px 5px;
-            border-left-width: 2px;
-            border-radius: 4px;
-        }
-
-        .h-dice-group { gap: 2px; }
-
-        .h-dice {
-            width: 14px; height: 14px; padding: 2px; border-radius: 2px;
-        }
-        .h-dot { width: 2px; height: 2px; }
-
-        .h-result { font-size: 11px; }
-
-        .main-play-area {
-            width: 100%;
-            margin-top: 10px; 
-        }
-
-        .shaker-container {
-            transform: scale(0.6); 
-            margin: -20px 0 -30px 0; 
-        }
-
-        .message {
-            font-size: 16px; 
-            margin-bottom: 10px;
-        }
-
-        .controls {
-            flex-direction: row;
-            gap: 8px;
-            width: 95%;
-            margin-bottom: 10px;
-        }
-        .btn {
-            padding: 12px 5px; 
-            font-size: 14px;
-            flex: 1;
-            min-width: 0;
-            white-space: nowrap;
-        }
-
-        .chip-board {
-            bottom: 15px;
-            padding: 8px 10px;
-            gap: 8px;
-            width: 95%;
-            max-width: 400px;
-        }
-
-        .chip {
-            width: 45px;
-            height: 45px;
-            font-size: 11px;
-        }
-
-        .zoom-controls {
-            bottom: 80px; 
-            right: 15px;
-            gap: 8px;
-        }
-        .btn-zoom {
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
-        }
-        .btn-zoom.reset {
-            font-size: 12px;
-        }
-
-        .board-container {
-            margin-bottom: 100px; 
-        }
+    #confirmVoidGroup{display:none;position:absolute;top:0;left:0;width:100%;height:100%;flex-direction:column;gap:6px}
+    #confirmVoidGroup .btn-panel{flex:1;width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:12px}
+    #confirmVoidGroup .btn-panel span{font-size:9px}
+    .btn-confirm{background:linear-gradient(to bottom,#2ecc71,#27ae60)}
+    .btn-void{background:linear-gradient(to bottom,#7f8c8d,#95a5a6)}
+    .chip-board{position:fixed;left:0;top:0;display:flex;gap:10px;justify-content:center;align-items:center;background:rgba(0,0,0,.7);padding:8px 14px;border-radius:50px;border:2px solid #b89847;box-shadow:0 8px 20px rgba(0,0,0,.8);z-index:1000;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transform:translate(0,0);transition:box-shadow .2s}
+    .chip-board.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none}
+    .chip-board.dragging .chip{cursor:grabbing}
+    .chip{width:44px;height:44px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:12px;font-weight:bold;color:#fff;cursor:pointer;transition:transform .2s,box-shadow .2s,opacity .2s;border:3px solid transparent;text-shadow:1px 1px 2px rgba(0,0,0,.8);flex-shrink:0}
+    .chip:hover{transform:translateY(-3px)}
+    .chip.active{border-color:#fff;transform:translateY(-6px) scale(1.08);box-shadow:0 0 16px rgba(255,255,255,.8),0 6px 12px rgba(0,0,0,.6)}
+    .chip-10000{background:radial-gradient(circle at 30% 30%,#f1c40f,#d4ac0d);color:#333;text-shadow:none}
+    .chip-5000{background:radial-gradient(circle at 30% 30%,#555,#222)}
+    .chip-1000{background:radial-gradient(circle at 30% 30%,#2ecc71,#27ae60)}
+    .chip-500{background:radial-gradient(circle at 30% 30%,#4a90e2,#2980b9)}
+    .chip-100{background:radial-gradient(circle at 30% 30%,#ff6b6b,#c0392b)}
+    .board-container{width:100%;max-width:1600px;position:relative;margin:20px 0 120px 0}
+    .dim-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:1500;display:none;border-radius:8px;pointer-events:none}
+    .countdown-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.9);color:#ff3b3b;font-size:140px;font-weight:bold;padding:30px 80px;border-radius:20px;border:4px solid #b89847;z-index:2000;display:none;text-shadow:0 0 30px rgba(255,59,59,.8);box-shadow:0 0 50px rgba(0,0,0,.9);pointer-events:none}
+    .table-board{width:1800px;height:960px;background-color:#15472b;border:8px solid #b89847;border-radius:8px;padding:10px;position:absolute;top:0;left:50%;transform:translateX(-50%) scale(var(--scale,1));transform-origin:top center;display:flex;flex-direction:column;gap:8px}
+    .cell{background-color:#fcf9f2;border:2px solid #b89847;border-radius:6px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;color:#222;position:relative;overflow:hidden;cursor:pointer;transition:all .2s ease}
+    .table-board.betting-active .cell:hover{background-color:#fff8e7}
+    .table-board:not(.betting-active) .cell{cursor:not-allowed;opacity:.85}
+    .bet-active{background-color:#ffe4e1!important;border-color:#ff3b3b!important;box-shadow:inset 0 0 0 4px #ff3b3b!important}
+    .win-cell{background-color:#fffacd!important;box-shadow:0 0 25px #ffd700,inset 0 0 15px #ffd700!important;border-color:#ffd700!important;z-index:10}
+    .bet-mark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;background:#ff3b3b;color:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:14px;font-weight:bold;box-shadow:1px 1px 5px rgba(0,0,0,.6);z-index:5;text-shadow:1px 1px 1px rgba(0,0,0,.5)}
+    .en{font-size:13px;font-weight:bold;line-height:1.1;color:#333}
+    .cn{font-size:14px;font-weight:bold;color:#222}
+    .big-word{font-size:85px;font-weight:normal;color:#b89847;font-family:'Times New Roman','SimSun',serif;line-height:1;text-shadow:2px 2px 3px rgba(0,0,0,.2);margin-top:5px}
+    .num-word{font-size:54px;font-weight:bold;color:#b89847;font-family:'Times New Roman',serif;font-style:italic;line-height:1;text-shadow:1px 1px 2px rgba(0,0,0,.2)}
+    .odds-line{font-size:14px;color:#c42020;font-weight:bold;line-height:1.2}
+    .dice-box{width:42px;height:42px;background-color:#c83232;border-radius:6px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:5px;box-shadow:inset -1px -1px 3px rgba(0,0,0,.3),1px 1px 2px rgba(0,0,0,.4);flex-shrink:0}
+    .d{border-radius:50%;width:8px;height:8px;align-self:center;justify-self:center}
+    .any-triple-cell .dice-box{width:34px;height:34px}
+    .any-triple-cell .d{width:6px;height:6px}
+    .w{background-color:#fff}
+    .b{background-color:#1a237e}
+    .large-dice{width:100px;height:100px;background-color:#c83232;border-radius:10px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:10px;margin:auto;box-shadow:2px 2px 6px rgba(0,0,0,.4);aspect-ratio:1/1;flex-shrink:0}
+    .large-d{border-radius:50%;width:16px;height:16px;align-self:center;justify-self:center}
+    .main-row{display:flex;gap:8px;width:100%}
+    .side-cell{width:175px;flex-shrink:0;padding:15px 10px;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px;position:relative}
+    .center-container{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    .grid-16{display:grid;grid-template-columns:repeat(16,1fr);gap:8px;width:100%;height:100%}
+    .span-3{grid-column:span 3}
+    .span-4{grid-column:span 4}
+    .row-top{height:305px;flex-shrink:0}
+    .top-group{display:flex;flex-direction:column;gap:4px;height:100%}
+    .top-title{background:linear-gradient(to bottom,#ebd197,#d4af37);border:2px solid #b89847;border-bottom:none;border-radius:6px 6px 0 0;text-align:center;padding:4px 0;font-size:14px;font-weight:bold;color:#333;height:32px;display:flex;justify-content:center;align-items:center;box-sizing:border-box}
+    .top-cells-row{flex:1;display:flex;gap:6px;height:calc(100% - 36px)}
+    .cell-v{flex:1;background-color:#fcf9f2;border:2px solid #b89847;border-radius:6px;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;padding:5px 2px;height:100%;cursor:pointer;position:relative;transition:all .2s ease}
+    .top-cells-col{flex:1;display:flex;flex-direction:column;gap:6px;height:calc(100% - 36px)}
+    .cell-h{flex:1;background-color:#fcf9f2;border:2px solid #b89847;border-radius:6px;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;padding:4px;width:100%;cursor:pointer;position:relative;transition:all .2s ease}
+    .any-triple-cell{background-color:#15472b;color:#fff;justify-content:center;gap:10px;height:calc(100% - 36px);border-radius:6px;position:relative;border:2px solid #b89847;overflow:hidden;cursor:pointer;transition:all .2s ease}
+    .any-text-en{font-size:34px;font-weight:bold;color:#e2c270;line-height:1.1;letter-spacing:2px;text-align:center;z-index:2;text-shadow:1px 1px 3px rgba(0,0,0,.5)}
+    .any-text-cn{font-size:38px;font-weight:bold;color:#fff;text-align:center;z-index:2;text-shadow:1px 1px 3px rgba(0,0,0,.5)}
+    .bg-dice-group{position:absolute;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1;transform:scale(.85)}
+    .bg-dice-row{display:flex;gap:6px}
+    .dice-stack{display:flex;flex-direction:column;gap:6px;align-items:center}
+    .dice-row{display:flex;flex-direction:row;gap:4px;justify-content:center}
+    .label-row{display:flex;justify-content:center;align-items:baseline;gap:6px;margin-top:2px}
+    .row-combo{height:305px;flex-shrink:0}
+    .grid-combo{display:grid;grid-template-columns:75px repeat(15,1fr);gap:8px;width:100%;height:100%}
+    .combo-left-bar{background:linear-gradient(to bottom,#ebd197,#d4af37);border:2px solid #b89847;border-radius:6px;display:flex;justify-content:center;align-items:center;text-align:center;font-size:12px;font-weight:bold;color:#333;line-height:1.2;padding:2px}
+    .combo-cell{padding:8px 2px;justify-content:space-evenly;position:relative}
+    .row-sums{display:flex;gap:8px;height:130px;flex-shrink:0;margin-top:4px}
+    .sum-cell{flex:1;justify-content:center;gap:4px;position:relative}
+    .row-single-dice{display:flex;gap:8px;height:130px;flex-shrink:0}
+    .single-dice-cell{flex:1;padding:10px;position:relative}
+    .footer{height:30px;background:linear-gradient(to bottom,#ebd197,#d4af37);border:2px solid #b89847;border-radius:6px;display:flex;justify-content:center;align-items:center;font-size:13px;font-weight:bold;color:#333;white-space:nowrap;flex-shrink:0;margin-top:4px}
+    .zoom-controls{position:fixed;bottom:90px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:1000}
+    .btn-zoom{width:50px;height:50px;border-radius:50%;background:rgba(0,0,0,.8);color:#fff;border:2px solid #b89847;font-size:24px;font-weight:bold;cursor:pointer;display:flex;justify-content:center;align-items:center;box-shadow:0 4px 10px rgba(0,0,0,.5);transition:all .2s;user-select:none}
+    .btn-zoom:hover{background:#b89847;color:#111}
+    .btn-zoom.reset{font-size:14px}
+    @media (max-width:768px){
+        .top-section{flex-direction:column;padding:10px;gap:10px}
+        .history-panel{position:relative;left:0;top:0;width:95%;height:70px;flex-direction:row;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:5px 10px;margin:0 auto;gap:10px}
+        .history-panel h3{display:none}
+        .history-item{padding:4px 6px;height:100%;border-left:2px solid #555}
+        .main-play-area{flex-direction:column;gap:0}
+        .shaker-container{transform:scale(.7);margin:-35px}
+        .message{font-size:16px;margin-top:5px;margin-bottom:5px}
+        .countdown-overlay{font-size:80px;padding:20px 40px}
+        .chip-board{padding:6px 8px;gap:6px;max-width:calc(100vw - 20px)}
+        .chip{width:38px;height:38px;font-size:10px}
+        .zoom-controls{bottom:80px;right:15px;gap:8px}
+        .btn-zoom{width:40px;height:40px;font-size:20px}
+        .btn-zoom.reset{font-size:12px}
+        .board-container{margin-bottom:100px}
     }
 </style>
 </head>
 <body>
 
-    <!-- 上方：骰盅與控制區 -->
     <div class="top-section">
-        
-        <!-- 歷史記錄面板 -->
         <div class="history-panel" id="historyPanel">
             <h3>最新10局</h3>
-            <!-- 記錄將由 JS 動態生成 -->
         </div>
-
-        <!-- 主要遊戲區 -->
         <div class="main-play-area">
-            <!-- 骰盅 -->
             <div class="shaker-container" id="shakerContainer">
                 <div class="shaker-base" id="shakerBase">
                     <div class="dice" id="die1"></div>
@@ -586,20 +161,39 @@
                 </div>
                 <div class="shaker-cover" id="shakerCover"></div>
             </div>
+            <div class="message" id="messageDisplay">請點擊「Start」開始搖骰</div>
+        </div>
+    </div>
 
-            <!-- 黃字提示 -->
-            <div class="message" id="messageDisplay">請點擊「開始搖骰」</div>
-
-            <!-- 按鈕 -->
-            <div class="controls">
-                <button class="btn btn-roll" id="rollBtn" onclick="startRoll()">開始搖骰</button>
-                <button class="btn btn-open" id="openBtn" onclick="openAndSettle()" disabled>買定開盅</button>
-                <button class="btn btn-clear" id="clearBtn" onclick="clearBets()" disabled>清除下注</button>
+    <div class="display-panel" id="displayPanel">
+        <div class="result-display" id="resultDisplay"></div>
+        <div class="panel-controls" id="panelControls">
+            <button class="btn-panel btn-start" id="startBtn" onclick="startRoll()">Start<br><span>開始打骰</span></button>
+            <div id="actionGroup">
+                <button class="btn-panel btn-nomore" id="nomoreBtn" onclick="startCountdown()">No more bet<br><span>買定開盅</span></button>
+                <button class="btn-panel btn-void-top" id="voidBtnTop" onclick="showVoidNumpad()">Void<br><span>取消下注</span></button>
+            </div>
+            <div id="numpadContainer">
+                <button class="numpad-btn" onclick="handleNumpadInput('1')">1</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('2')">2</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('3')">3</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('4')">4</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('5')">5</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('6')">6</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('7')">7</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('8')">8</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('9')">9</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('C')" style="color:#ff3b3b;">C</button>
+                <button class="numpad-btn" onclick="handleNumpadInput('0')">0</button>
+                <button class="numpad-btn" onclick="cancelVoidNumpad()" style="font-size:10px;">Back</button>
+            </div>
+            <div id="confirmVoidGroup">
+                <button class="btn-panel btn-confirm" id="confirmBtn" onclick="confirmResult()">Confirm<br><span>確認結算</span></button>
+                <button class="btn-panel btn-void" id="voidBtn" onclick="voidResult()">Void<br><span>取消作廢</span></button>
             </div>
         </div>
     </div>
 
-    <!-- 懸浮籌碼板 -->
     <div class="chip-board" id="chipBoard">
         <div class="chip chip-10000 active" onclick="selectChip(10000, this)">10000</div>
         <div class="chip chip-5000" onclick="selectChip(5000, this)">5000</div>
@@ -608,11 +202,10 @@
         <div class="chip chip-100" onclick="selectChip(100, this)">100</div>
     </div>
 
-    <!-- 下方：投注區 -->
     <div class="board-container" id="boardContainer">
+        <div class="dim-overlay" id="dimOverlay"></div>
+        <div class="countdown-overlay" id="countdownOverlay">10</div>
         <div class="table-board" id="tableBoard">
-            
-            <!-- 第一排 -->
             <div class="main-row row-top">
                 <div class="cell side-cell" data-type="Big" onclick="placeBet(this)">
                     <div class="en" style="font-size:22px;">BIG</div>
@@ -624,7 +217,6 @@
                     <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
                     <div class="big-word">大</div>
                 </div>
-
                 <div class="center-container">
                     <div class="grid-16">
                         <div class="top-group span-3">
@@ -650,7 +242,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="top-group span-3">
                             <div class="top-title">1 WINS 150 1賠150</div>
                             <div class="top-cells-col">
@@ -680,7 +271,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="top-group span-4">
                             <div class="top-title">1 WINS 24 1賠24</div>
                             <div class="any-triple-cell" data-type="AnyTriple" onclick="placeBet(this)">
@@ -712,7 +302,6 @@
                                 <div class="any-text-cn">全圍</div>
                             </div>
                         </div>
-
                         <div class="top-group span-3">
                             <div class="top-title">1 WINS 150 1賠150</div>
                             <div class="top-cells-col">
@@ -730,7 +319,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="top-group span-3">
                             <div class="top-title">DOUBLE 1 WINS 8 雙骰一賠八</div>
                             <div class="top-cells-row">
@@ -756,7 +344,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="cell side-cell" data-type="Big" onclick="placeBet(this)">
                     <div class="en" style="font-size:22px;">BIG</div>
                     <div class="en" style="font-size:12px;">ARE NUMBERS 11 TO 17</div>
@@ -767,12 +354,8 @@
                     <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
                     <div class="big-word">大</div>
                 </div>
-
             </div>
-
-            <!-- 第二排：小 + 兩骰組合 + 小 -->
             <div class="main-row row-combo">
-                
                 <div class="cell side-cell" data-type="Small" onclick="placeBet(this)">
                     <div class="en" style="font-size:22px;">SMALL</div>
                     <div class="en" style="font-size:12px;">ARE NUMBERS 4 TO 10</div>
@@ -783,11 +366,9 @@
                     <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
                     <div class="big-word">小</div>
                 </div>
-
                 <div class="center-container">
                     <div class="grid-combo">
                         <div class="combo-left-bar">TWO DICE<br>COMBINATION<br>1 WINS 5</div>
-                        
                         <div class="cell combo-cell" data-type="Combo5_6" onclick="placeBet(this)"><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:2/2"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div><div class="en" style="margin:8px 0;">5 AND 6</div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
                         <div class="cell combo-cell" data-type="Combo4_6" onclick="placeBet(this)"><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div><div class="en" style="margin:8px 0;">4 AND 6</div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/1"></div><div class="d w" style="grid-area:2/3"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
                         <div class="cell combo-cell" data-type="Combo4_5" onclick="placeBet(this)"><div class="dice-box"><div class="d b" style="grid-area:1/1"></div><div class="d b" style="grid-area:1/3"></div><div class="d b" style="grid-area:3/1"></div><div class="d b" style="grid-area:3/3"></div></div><div class="en" style="margin:8px 0;">4 AND 5</div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:1/3"></div><div class="d w" style="grid-area:2/2"></div><div class="d w" style="grid-area:3/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
@@ -805,7 +386,6 @@
                         <div class="cell combo-cell" data-type="Combo1_2" onclick="placeBet(this)"><div class="dice-box"><div class="d w" style="grid-area:2/2"></div></div><div class="en" style="margin:8px 0;">1 AND 2</div><div class="dice-box"><div class="d w" style="grid-area:1/1"></div><div class="d w" style="grid-area:3/3"></div></div></div>
                     </div>
                 </div>
-
                 <div class="cell side-cell" data-type="Small" onclick="placeBet(this)">
                     <div class="en" style="font-size:22px;">SMALL</div>
                     <div class="en" style="font-size:12px;">ARE NUMBERS 4 TO 10</div>
@@ -816,10 +396,7 @@
                     <div class="en" style="font-size:12px; color:#c42020;">圍骰通吃</div>
                     <div class="big-word">小</div>
                 </div>
-
             </div>
-
-            <!-- 第三排：點數總和 -->
             <div class="row-sums">
                 <div class="cell sum-cell" data-type="Sum17" onclick="placeBet(this)"><div class="num-word">17</div><div class="odds-line">1 to 50</div><div class="odds-line">1 赢 50</div></div>
                 <div class="cell sum-cell" data-type="Sum16" onclick="placeBet(this)"><div class="num-word">16</div><div class="odds-line">1 to 18</div><div class="odds-line">1 赢 18</div></div>
@@ -836,8 +413,6 @@
                 <div class="cell sum-cell" data-type="Sum5" onclick="placeBet(this)"><div class="num-word">5</div><div class="odds-line">1 to 18</div><div class="odds-line">1 赢 18</div></div>
                 <div class="cell sum-cell" data-type="Sum4" onclick="placeBet(this)"><div class="num-word">4</div><div class="odds-line">1 to 50</div><div class="odds-line">1 赢 50</div></div>
             </div>
-
-            <!-- 第四排：單骰 6-1 -->
             <div class="row-single-dice">
                 <div class="cell single-dice-cell" data-type="Single6" onclick="placeBet(this)"><div class="large-dice"><div class="large-d w" style="grid-area:1/1"></div><div class="large-d w" style="grid-area:1/3"></div><div class="large-d w" style="grid-area:2/1"></div><div class="large-d w" style="grid-area:2/3"></div><div class="large-d w" style="grid-area:3/1"></div><div class="large-d w" style="grid-area:3/3"></div></div></div>
                 <div class="cell single-dice-cell" data-type="Single5" onclick="placeBet(this)"><div class="large-dice"><div class="large-d w" style="grid-area:1/1"></div><div class="large-d w" style="grid-area:1/3"></div><div class="large-d w" style="grid-area:2/2"></div><div class="large-d w" style="grid-area:3/1"></div><div class="large-d w" style="grid-area:3/3"></div></div></div>
@@ -846,14 +421,12 @@
                 <div class="cell single-dice-cell" data-type="Single2" onclick="placeBet(this)"><div class="large-dice"><div class="large-d b" style="grid-area:1/1"></div><div class="large-d b" style="grid-area:3/3"></div></div></div>
                 <div class="cell single-dice-cell" data-type="Single1" onclick="placeBet(this)"><div class="large-dice"><div class="large-d b" style="grid-area:2/2"></div></div></div>
             </div>
-
             <div class="footer">
                 1 TO 1 ON ONE DICE 一顆骰子相同一賠一 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2 TO 1 ON TWO DICE 二顆骰子相同一賠二 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; • &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3 TO 1 ON THREE DICE 三顆骰子相同一賠三
             </div>
         </div>
     </div>
 
-    <!-- 縮放控制按鈕 -->
     <div class="zoom-controls">
         <button class="btn-zoom" onclick="zoomIn()">+</button>
         <button class="btn-zoom" onclick="zoomOut()">-</button>
@@ -861,66 +434,122 @@
     </div>
 
     <script>
-        // ================= 縮放與版面計算 =================
         let userScale = 1;
-
         function updateBoardScale() {
             const container = document.getElementById('boardContainer');
             const board = document.getElementById('tableBoard');
             const containerWidth = container.offsetWidth;
-            const baseWidth = 1800; 
-            const baseHeight = 960;
-            
+            const baseWidth = 1800, baseHeight = 960;
             let autoScale = containerWidth / baseWidth; 
             let finalScale = autoScale * userScale;
-            
             board.style.setProperty('--scale', finalScale);
             container.style.height = (baseHeight * finalScale) + 'px';
         }
+        function zoomIn(){ userScale += .1; if(userScale > 2) userScale = 2; updateBoardScale(); }
+        function zoomOut(){ userScale -= .1; if(userScale < .5) userScale = .5; updateBoardScale(); }
+        function resetZoom(){ userScale = 1; updateBoardScale(); }
 
-        function zoomIn() {
-            userScale += 0.1;
-            if(userScale > 2) userScale = 2;
-            updateBoardScale();
+        const displayPanel = document.getElementById('displayPanel');
+        let panelX = 0, panelY = 0, isPanelDragging = false, panelHasMoved = false, panelSuppressClick = false, panelStartX = 0, panelStartY = 0, panelStartBoardX = 0, panelStartBoardY = 0;
+        function applyPanelPosition(){ displayPanel.style.transform = `translate(${panelX}px, ${panelY}px)`; }
+        function clampPanelPosition(){
+            const rect = displayPanel.getBoundingClientRect(), w = rect.width, h = rect.height;
+            const maxX = window.innerWidth - w - 10, maxY = window.innerHeight - h - 10;
+            if(panelX < 10) panelX = 10; if(panelY < 10) panelY = 10;
+            if(panelX > maxX) panelX = maxX; if(panelY > maxY) panelY = maxY;
         }
-
-        function zoomOut() {
-            userScale -= 0.1;
-            if(userScale < 0.5) userScale = 0.5;
-            updateBoardScale();
+        function initPanelPosition(){
+            const rect = displayPanel.getBoundingClientRect();
+            panelX = window.innerWidth - rect.width - 20; panelY = 120;
+            clampPanelPosition(); applyPanelPosition();
         }
-
-        function resetZoom() {
-            userScale = 1;
-            updateBoardScale();
+        function startPanelDrag(e){
+            if(e.type === 'mousedown' && e.button !== 0) return;
+            const point = e.touches ? e.touches[0] : e;
+            panelStartX = point.clientX; panelStartY = point.clientY;
+            panelStartBoardX = panelX; panelStartBoardY = panelY;
+            panelHasMoved = false; isPanelDragging = true;
+            displayPanel.classList.add('dragging');
         }
+        function movePanelDrag(e){
+            if(!isPanelDragging) return;
+            const point = e.touches ? e.touches[0] : e;
+            const dx = point.clientX - panelStartX, dy = point.clientY - panelStartY;
+            if(!panelHasMoved && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) panelHasMoved = true;
+            if(panelHasMoved){
+                panelX = panelStartBoardX + dx; panelY = panelStartBoardY + dy;
+                clampPanelPosition(); applyPanelPosition();
+                panelSuppressClick = true;
+                if(e.cancelable) e.preventDefault();
+            }
+        }
+        function endPanelDrag(){
+            if(!isPanelDragging) return;
+            isPanelDragging = false; displayPanel.classList.remove('dragging');
+        }
+        displayPanel.addEventListener('mousedown', startPanelDrag);
+        document.addEventListener('mousemove', movePanelDrag);
+        document.addEventListener('mouseup', endPanelDrag);
+        displayPanel.addEventListener('touchstart', startPanelDrag, { passive: true });
+        document.addEventListener('touchmove', movePanelDrag, { passive: false });
+        document.addEventListener('touchend', endPanelDrag);
+        document.addEventListener('touchcancel', endPanelDrag);
+        displayPanel.addEventListener('click', (e) => {
+            if(panelSuppressClick){ e.stopPropagation(); e.preventDefault(); panelSuppressClick = false; }
+        }, true);
 
-        window.addEventListener('load', updateBoardScale);
-        window.addEventListener('resize', updateBoardScale);
+        const chipBoard = document.getElementById('chipBoard');
+        let isDragging = false, hasMoved = false, suppressClick = false, dragStartX = 0, dragStartY = 0, boardStartX = 0, boardStartY = 0, boardX = 0, boardY = 0;
+        function applyBoardPosition(){ chipBoard.style.transform = `translate(${boardX}px, ${boardY}px)`; }
+        function clampPosition(){
+            const rect = chipBoard.getBoundingClientRect(), w = rect.width, h = rect.height;
+            const maxX = window.innerWidth - w, maxY = window.innerHeight - h;
+            if(boardX < 0) boardX = 0; if(boardY < 0) boardY = 0;
+            if(boardX > maxX) boardX = maxX; if(boardY > maxY) boardY = maxY;
+        }
+        function initChipBoardPosition(){
+            const rect = chipBoard.getBoundingClientRect();
+            boardX = (window.innerWidth - rect.width) / 2; boardY = window.innerHeight - rect.height - 20;
+            clampPosition(); applyBoardPosition();
+        }
+        function startDrag(e){
+            if(e.type === 'mousedown' && e.button !== 0) return;
+            const point = e.touches ? e.touches[0] : e;
+            dragStartX = point.clientX; dragStartY = point.clientY;
+            boardStartX = boardX; boardStartY = boardY;
+            hasMoved = false; isDragging = true;
+            chipBoard.classList.add('dragging');
+        }
+        function moveDrag(e){
+            if(!isDragging) return;
+            const point = e.touches ? e.touches[0] : e;
+            const dx = point.clientX - dragStartX, dy = point.clientY - dragStartY;
+            if(!hasMoved && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) hasMoved = true;
+            if(hasMoved){
+                boardX = boardStartX + dx; boardY = boardStartY + dy;
+                clampPosition(); applyBoardPosition();
+                suppressClick = true;
+                if(e.cancelable) e.preventDefault();
+            }
+        }
+        function endDrag(){
+            if(!isDragging) return;
+            isDragging = false; chipBoard.classList.remove('dragging');
+        }
+        chipBoard.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', moveDrag);
+        document.addEventListener('mouseup', endDrag);
+        chipBoard.addEventListener('touchstart', startDrag, { passive: true });
+        document.addEventListener('touchmove', moveDrag, { passive: false });
+        document.addEventListener('touchend', endDrag);
+        document.addEventListener('touchcancel', endDrag);
+        chipBoard.addEventListener('click', (e) => {
+            if(suppressClick){ e.stopPropagation(); e.preventDefault(); suppressClick = false; }
+        }, true);
 
-        // ================= 遊戲狀態管理 =================
-        let currentChipValue = 10000; 
-        let currentBets = {}; 
-        
-        let gameState = 'idle'; 
-        let currentDice = [1, 1, 1];
-        let isStacked = false; 
-        let historyResults = [];
-
-        const messageEl = document.getElementById('messageDisplay');
-        const rollBtn = document.getElementById('rollBtn');
-        const openBtn = document.getElementById('openBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const shakerCover = document.getElementById('shakerCover');
-        const shakerContainer = document.getElementById('shakerContainer');
-        const shakerBase = document.getElementById('shakerBase');
-        const diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')];
-        const tableBoard = document.getElementById('tableBoard');
-        const historyPanel = document.getElementById('historyPanel');
-
-        const diceDots = {
-            1: [5], 2: [3, 7], 3: [3, 5, 7], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9]
-        };
+        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 10, enteredPassword = '';
+        const messageEl = document.getElementById('messageDisplay'), shakerCover = document.getElementById('shakerCover'), shakerContainer = document.getElementById('shakerContainer'), shakerBase = document.getElementById('shakerBase'), diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')], tableBoard = document.getElementById('tableBoard'), historyPanel = document.getElementById('historyPanel'), startBtn = document.getElementById('startBtn'), actionGroup = document.getElementById('actionGroup'), numpadContainer = document.getElementById('numpadContainer'), confirmVoidGroup = document.getElementById('confirmVoidGroup'), resultDisplay = document.getElementById('resultDisplay'), countdownOverlay = document.getElementById('countdownOverlay'), dimOverlay = document.getElementById('dimOverlay');
+        const diceDots = { 1: [5], 2: [3, 7], 3: [3, 5, 7], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
         
         function renderDice(el, val) {
             el.innerHTML = '';
@@ -930,274 +559,150 @@
                 el.appendChild(dot);
             }
         }
-
         function updateHistoryUI() {
             historyPanel.innerHTML = '<h3>最新10局</h3>';
-            
             historyResults.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'history-item';
-                
+                const div = document.createElement('div'); div.className = 'history-item';
                 let diceHTML = '<div class="h-dice-group">';
                 item.dice.forEach(val => {
                     let dotsHTML = '';
-                    for(let i=1; i<=9; i++) {
-                        if(diceDots[val].includes(i)) {
-                            dotsHTML += '<div class="h-dot"></div>';
-                        } else {
-                            dotsHTML += '<div></div>';
-                        }
-                    }
+                    for(let i=1; i<=9; i++) dotsHTML += diceDots[val].includes(i) ? '<div class="h-dot"></div>' : '<div></div>';
                     diceHTML += `<div class="h-dice">${dotsHTML}</div>`;
                 });
                 diceHTML += '</div>';
-
                 const isTriple = item.result.includes('圍');
-                const textClass = isTriple ? 'h-result triple' : 'h-result';
-                const textHTML = `<div class="${textClass}">${item.result}</div>`;
-
-                div.innerHTML = diceHTML + textHTML;
+                div.innerHTML = diceHTML + `<div class="h-result ${isTriple ? 'triple' : ''}">${item.result}</div>`;
                 historyPanel.appendChild(div);
             });
         }
-
         function positionDiceRandomly() {
-            const positions = [
-                { top: '25%', left: '15%', rot: -15 },
-                { top: '25%', left: '55%', rot: 20 },
-                { top: '55%', left: '25%', rot: 10 },
-                { top: '55%', left: '60%', rot: -25 },
-                { top: '40%', left: '40%', rot: 45 },
-                { top: '15%', left: '40%', rot: 5 },
-                { top: '65%', left: '40%', rot: -10 }
-            ];
-            positions.sort(() => Math.random() - 0.5);
-            
+            const positions = [{ top: '25%', left: '15%', rot: -15 }, { top: '25%', left: '55%', rot: 20 }, { top: '55%', left: '25%', rot: 10 }, { top: '55%', left: '60%', rot: -25 }, { top: '40%', left: '40%', rot: 45 }, { top: '15%', left: '40%', rot: 5 }, { top: '65%', left: '40%', rot: -10 }].sort(() => Math.random() - 0.5);
             diceEls.forEach((el, index) => {
-                el.style.top = positions[index].top;
-                el.style.left = positions[index].left;
-                el.style.transform = `rotate(${positions[index].rot}deg)`;
-                el.style.zIndex = 1; 
+                el.style.top = positions[index].top; el.style.left = positions[index].left;
+                el.style.transform = `rotate(${positions[index].rot}deg)`; el.style.zIndex = 1; 
             });
         }
-
         function positionDiceStacked() {
-            diceEls[0].style.top = '35%';
-            diceEls[0].style.left = '40%';
-            diceEls[0].style.transform = 'rotate(15deg)';
-            diceEls[0].style.zIndex = 3;
-
-            diceEls[1].style.top = '38%';
-            diceEls[1].style.left = '45%';
-            diceEls[1].style.transform = 'rotate(-10deg)';
-            diceEls[1].style.zIndex = 2;
-
-            diceEls[2].style.top = '60%';
-            diceEls[2].style.left = '20%';
-            diceEls[2].style.transform = 'rotate(45deg)';
-            diceEls[2].style.zIndex = 1;
+            diceEls[0].style.cssText = 'top:35%;left:40%;transform:rotate(15deg);z-index:3;';
+            diceEls[1].style.cssText = 'top:38%;left:45%;transform:rotate(-10deg);z-index:2;';
+            diceEls[2].style.cssText = 'top:60%;left:20%;transform:rotate(45deg);z-index:1;';
         }
-
         function showMessage(msg, color = '#ffd700') {
             messageEl.style.opacity = 0;
-            setTimeout(() => {
-                messageEl.innerText = msg;
-                messageEl.style.color = color;
-                messageEl.style.opacity = 1;
-            }, 150);
+            setTimeout(() => { messageEl.innerText = msg; messageEl.style.color = color; messageEl.style.opacity = 1; }, 150);
         }
-
-        function clearWinHighlights() {
-            document.querySelectorAll('.win-cell').forEach(el => el.classList.remove('win-cell'));
-        }
-
+        function clearWinHighlights() { document.querySelectorAll('.win-cell').forEach(el => el.classList.remove('win-cell')); }
         function selectChip(value, element) {
-            if (gameState !== 'betting') {
-                showMessage("請先等待搖骰完畢再選擇籌碼", "#ff3b3b");
-                return;
-            }
+            if (gameState !== 'betting') { showMessage("請先等待搖骰完畢再選擇籌碼", "#ff3b3b"); return; }
             currentChipValue = value;
-            
             document.querySelectorAll('.chip').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
-            
             showMessage(`已選擇 $${value} 籌碼，請點擊下方投注區。`, "#ffd700");
         }
-
-        function startRoll() {
-            if (gameState !== 'idle') return;
-            gameState = 'rolling';
-            
-            rollBtn.disabled = true;
-            shakerCover.classList.remove('open'); 
-            diceEls.forEach(el => el.style.opacity = 0);
-            tableBoard.classList.remove('betting-active'); 
-            
-            // 清空上一局殘留的籌碼標記與特效
-            document.querySelectorAll('.bet-mark').forEach(el => el.remove());
-            clearWinHighlights();
-
-            shakerBase.classList.remove('glow-green', 'glow-red');
-            isStacked = false;
-
-            shakerContainer.classList.add('shaking');
-            showMessage("搖骰中，請稍候...", "#fff");
-
-            setTimeout(() => {
-                shakerContainer.classList.remove('shaking');
-                
-                // 5% 機率出現疊骰
-                isStacked = Math.random() < 0.05; 
-                
-                if (isStacked) {
-                    currentDice = [
-                        Math.floor(Math.random() * 6) + 1,
-                        Math.floor(Math.random() * 6) + 1,
-                        Math.floor(Math.random() * 6) + 1
-                    ];
-                    shakerBase.classList.add('glow-red');
-                    positionDiceStacked();
-                    
-                    gameState = 'betting';
-                    tableBoard.classList.add('betting-active');
-                    showMessage("🔥 發生疊骰！請手動點擊「清除下注」結束此局。", "#ff3b3b");
-                    
-                    openBtn.disabled = true; 
-                } else {
-                    currentDice = [
-                        Math.floor(Math.random() * 6) + 1,
-                        Math.floor(Math.random() * 6) + 1,
-                        Math.floor(Math.random() * 6) + 1
-                    ];
-                    shakerBase.classList.add('glow-green');
-                    positionDiceRandomly();
-
-                    gameState = 'betting';
-                    tableBoard.classList.add('betting-active');
-                    showMessage(`搖骰完畢！請使用 $${currentChipValue} 籌碼下注。`, "#ffd700");
-                }
-                
-                document.querySelectorAll('.chip').forEach(el => el.style.opacity = 1);
-            }, 2000);
-        }
-
-        function placeBet(el) {
-            if (gameState !== 'betting') return; 
-
-            const type = el.getAttribute('data-type');
-            currentBets[type] = (currentBets[type] || 0) + currentChipValue;
-
-            el.classList.add('bet-active');
-            let mark = el.querySelector('.bet-mark');
-            if (!mark) {
-                mark = document.createElement('div');
-                mark.className = 'bet-mark';
-                el.appendChild(mark);
-            }
-            mark.innerText = currentBets[type];
-
-            if (!isStacked) {
-                openBtn.disabled = false;
-            }
-            clearBtn.disabled = false;
-            showMessage(`已下注 $${currentBets[type]} 在 ${type}`, "#ffd700");
-        }
-
-        function clearBets() {
+        function showVoidNumpad() {
             if (gameState !== 'betting') return;
-
+            gameState = 'enter_void_password'; enteredPassword = '';
+            resultDisplay.innerText = '_ _ _ _';
+            actionGroup.style.display = 'none'; numpadContainer.style.display = 'grid';
+        }
+        function cancelVoidNumpad() {
+            if (gameState !== 'enter_void_password') return;
+            gameState = 'betting'; resultDisplay.innerText = '';
+            numpadContainer.style.display = 'none'; actionGroup.style.display = 'flex';
+        }
+        function handleNumpadInput(num) {
+            if (gameState !== 'enter_void_password') return;
+            if (num === 'C') { enteredPassword = ''; resultDisplay.innerText = '_ _ _ _'; return; }
+            if (enteredPassword.length < 4) {
+                enteredPassword += num;
+                resultDisplay.innerText = enteredPassword.split('').map(() => '*').join(' ');
+            }
+            if (enteredPassword.length === 4) {
+                if (enteredPassword === '1234') executeVoid();
+                else {
+                    resultDisplay.innerText = 'ERR';
+                    setTimeout(() => { enteredPassword = ''; resultDisplay.innerText = '_ _ _ _'; }, 1000);
+                }
+            }
+        }
+        function executeVoid() {
             currentBets = {};
             document.querySelectorAll('.bet-active').forEach(el => el.classList.remove('bet-active'));
             document.querySelectorAll('.bet-mark').forEach(el => el.remove());
-            
-            openBtn.disabled = true;
-            clearBtn.disabled = true;
-            clearWinHighlights(); 
-
-            if (isStacked) {
-                shakerBase.classList.remove('glow-red');
-                isStacked = false;
-                gameState = 'idle';
-                rollBtn.disabled = false;
-                showMessage("疊骰無效，已清除注單，請重新搖骰。", "#aaa");
-            } else {
-                showMessage("已清除下注", "#ffd700");
-            }
+            clearWinHighlights();
+            numpadContainer.style.display = 'none'; actionGroup.style.display = 'none';
+            gameState = 'idle'; startBtn.disabled = false; startBtn.style.display = 'flex';
+            resultDisplay.innerText = ''; tableBoard.classList.remove('betting-active');
+            showMessage("已清除所有下注，請重新開始。", "#aaa");
+            document.querySelectorAll('.chip').forEach(el => el.style.opacity = 1);
         }
-
-        function openAndSettle() {
-            if (gameState !== 'betting' || isStacked) return; 
-            
-            gameState = 'settling';
-            
-            openBtn.disabled = true;
-            clearBtn.disabled = true;
-            tableBoard.classList.remove('betting-active');
-
-            document.querySelectorAll('.chip').forEach(el => el.style.opacity = 0.5);
-
-            renderDice(diceEls[0], currentDice[0]);
-            renderDice(diceEls[1], currentDice[1]);
-            renderDice(diceEls[2], currentDice[2]);
-
-            shakerCover.classList.add('open');
+        function startRoll() {
+            if (gameState !== 'idle') return;
+            gameState = 'rolling'; startBtn.disabled = true;
+            shakerCover.classList.remove('open'); diceEls.forEach(el => el.style.opacity = 0);
+            tableBoard.classList.remove('betting-active'); document.querySelectorAll('.bet-mark').forEach(el => el.remove());
+            clearWinHighlights(); shakerBase.classList.remove('glow-green', 'glow-red');
+            isStacked = false; resultDisplay.innerText = '';
+            shakerContainer.classList.add('shaking'); showMessage("搖骰中，請稍候...", "#fff");
             setTimeout(() => {
-                diceEls.forEach(el => el.style.opacity = 1);
-            }, 300);
-
+                shakerContainer.classList.remove('shaking');
+                isStacked = Math.random() < 0.05; 
+                currentDice = [Math.floor(Math.random() * 6) + 1, Math.floor(Math.random() * 6) + 1, Math.floor(Math.random() * 6) + 1];
+                if (isStacked) {
+                    shakerBase.classList.add('glow-red'); positionDiceStacked();
+                    showMessage("🔥 發生疊骰！請點擊「No more bet」。", "#ff3b3b");
+                } else {
+                    shakerBase.classList.add('glow-green'); positionDiceRandomly();
+                    showMessage(`搖骰完畢！請使用 $${currentChipValue} 籌碼下注。`, "#ffd700");
+                }
+                gameState = 'betting'; tableBoard.classList.add('betting-active');
+                startBtn.style.display = 'none'; actionGroup.style.display = 'flex';
+                document.querySelectorAll('.chip').forEach(el => el.style.opacity = 1);
+            }, 2000);
+        }
+        function startCountdown() {
+            if (gameState !== 'betting') return;
+            gameState = 'countdown'; actionGroup.style.display = 'none';
+            tableBoard.classList.remove('betting-active');
+            document.querySelectorAll('.chip').forEach(el => el.style.opacity = 0.5);
+            dimOverlay.style.display = 'block';
+            countdownValue = 10; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
+            showMessage("停止下注，準備開盅...", "#ffd700");
+            countdownTimer = setInterval(() => {
+                countdownValue--;
+                if (countdownValue > 0) countdownOverlay.innerText = countdownValue;
+                else {
+                    clearInterval(countdownTimer); countdownOverlay.style.display = 'none';
+                    dimOverlay.style.display = 'none'; openAndShowResult();
+                }
+            }, 1000);
+        }
+        function openAndShowResult() {
+            gameState = 'waiting_confirm';
+            renderDice(diceEls[0], currentDice[0]); renderDice(diceEls[1], currentDice[1]); renderDice(diceEls[2], currentDice[2]);
+            shakerCover.classList.add('open');
+            setTimeout(() => { diceEls.forEach(el => el.style.opacity = 1); }, 300);
+            resultDisplay.innerText = currentDice.join(' ');
             const total = currentDice[0] + currentDice[1] + currentDice[2];
             const isTriple = (currentDice[0] === currentDice[1] && currentDice[1] === currentDice[2]);
             const tripleVal = isTriple ? currentDice[0] : 0;
-            
             const winningTypes = new Set();
-
             if (!isTriple) {
                 if (total >= 11 && total <= 17) winningTypes.add('Big');
                 if (total >= 4 && total <= 10) winningTypes.add('Small');
             }
-
-            if (isTriple) {
-                winningTypes.add('AnyTriple');
-                winningTypes.add(`Triple${tripleVal}`);
-            }
-
-            [1, 2, 3, 4, 5, 6].forEach(num => {
-                if (currentDice.filter(x => x === num).length >= 2) {
-                    winningTypes.add(`Double${num}`);
-                }
-            });
-
+            if (isTriple) { winningTypes.add('AnyTriple'); winningTypes.add(`Triple${tripleVal}`); }
+            [1, 2, 3, 4, 5, 6].forEach(num => { if (currentDice.filter(x => x === num).length >= 2) winningTypes.add(`Double${num}`); });
             winningTypes.add(`Sum${total}`);
-
-            [1, 2, 3, 4, 5, 6].forEach(num => {
-                if (currentDice.includes(num)) {
-                    winningTypes.add(`Single${num}`);
-                }
-            });
-
-            [1, 2, 3, 4, 5, 6].forEach(n1 => {
-                [1, 2, 3, 4, 5, 6].forEach(n2 => {
-                    if (n1 < n2 && currentDice.includes(n1) && currentDice.includes(n2)) {
-                        winningTypes.add(`Combo${n1}_${n2}`);
-                    }
-                });
-            });
-
+            [1, 2, 3, 4, 5, 6].forEach(num => { if (currentDice.includes(num)) winningTypes.add(`Single${num}`); });
+            [1, 2, 3, 4, 5, 6].forEach(n1 => { [1, 2, 3, 4, 5, 6].forEach(n2 => { if (n1 < n2 && currentDice.includes(n1) && currentDice.includes(n2)) winningTypes.add(`Combo${n1}_${n2}`); }); });
             document.querySelectorAll('[data-type]').forEach(cell => {
-                const type = cell.getAttribute('data-type');
-                if (winningTypes.has(type)) {
-                    cell.classList.add('win-cell');
-                }
+                if (winningTypes.has(cell.getAttribute('data-type'))) cell.classList.add('win-cell');
             });
-
-            let winnings = 0;
-            
+            currentWinnings = 0;
             for (let type in currentBets) {
                 if (!winningTypes.has(type)) continue; 
-                
-                let betAmt = currentBets[type];
-                let odds = 0;
-
+                let betAmt = currentBets[type], odds = 0;
                 if (type === 'Big' || type === 'Small') odds = 1;
                 else if (type === 'AnyTriple') odds = 24;
                 else if (type.startsWith('Triple')) odds = 150;
@@ -1211,64 +716,68 @@
                     else if (num === 8 || num === 13) odds = 8;
                     else odds = 6;
                 }
-                else if (type.startsWith('Single')) {
-                    let num = parseInt(type.replace('Single', ''));
-                    odds = currentDice.filter(x => x === num).length; 
-                }
+                else if (type.startsWith('Single')) { odds = currentDice.filter(x => x === parseInt(type.replace('Single', ''))).length; }
                 else if (type.startsWith('Combo')) odds = 5;
-
-                winnings += betAmt * (odds + 1);
+                currentWinnings += betAmt * (odds + 1);
             }
-
-            // 記錄歷史結果 (由小到大排序)
-            let resultText = '';
-            if (isTriple) {
-                resultText = `圍${['','一','二','三','四','五','六'][tripleVal]}`;
-            } else if (total >= 11 && total <= 17) {
-                resultText = '大';
-            } else {
-                resultText = '小';
-            }
-
-            const sortedDice = [...currentDice].sort((a, b) => a - b);
-            
-            historyResults.unshift({
-                dice: sortedDice,
-                result: resultText
-            });
-
-            if (historyResults.length > 10) {
-                historyResults.pop();
-            }
-
+            confirmVoidGroup.style.display = 'flex';
+            if (isStacked) showMessage("疊骰無效，請按 Confirm 或 Void 結束此局。", "#ff3b3b");
+            else showMessage("請確認結果", "#ffd700");
+        }
+        function confirmResult() {
+            if (gameState !== 'waiting_confirm') return;
+            gameState = 'settling'; confirmVoidGroup.style.display = 'none';
+            const total = currentDice[0] + currentDice[1] + currentDice[2];
+            const isTriple = (currentDice[0] === currentDice[1] && currentDice[1] === currentDice[2]);
+            const tripleVal = isTriple ? currentDice[0] : 0;
+            let resultText = isTriple ? `圍${['','一','二','三','四','五','六'][tripleVal]}` : (total >= 11 && total <= 17 ? '大' : '小');
+            historyResults.unshift({ dice: [...currentDice].sort((a, b) => a - b), result: resultText });
+            if (historyResults.length > 10) historyResults.pop();
             updateHistoryUI();
-
-            let resultMsg = `開獎結果: ${currentDice.join(', ')} (總和 ${total}) | `;
-            if (winnings > 0) {
-                showMessage(`${resultMsg} 恭喜中獎！贏得 $${winnings}`, "#ffd700");
-            } else {
-                showMessage(`${resultMsg} 未中獎。`, "#ff3b3b");
-            }
-
-            // ===== 結算清理邏輯修改 =====
+            if (isStacked) showMessage("疊骰無效，本局取消。", "#aaa");
+            else if (currentWinnings > 0) showMessage(`開獎結果: ${currentDice.join(', ')} | 恭喜中獎！贏得 $${currentWinnings}`, "#ffd700");
+            else showMessage(`開獎結果: ${currentDice.join(', ')} | 未中獎。`, "#ff3b3b");
+            cleanupBoard();
+        }
+        function voidResult() {
+            if (gameState !== 'waiting_confirm') return;
+            gameState = 'settling'; confirmVoidGroup.style.display = 'none';
+            showMessage("已作廢本局，清除所有下注。", "#aaa");
+            cleanupBoard();
+        }
+        function cleanupBoard() {
             currentBets = {};
             document.querySelectorAll('.bet-active').forEach(el => el.classList.remove('bet-active'));
-            
-            // 只保留中獎格子的籌碼標記，移除未中獎的籌碼標記
-            document.querySelectorAll('[data-type]').forEach(cell => {
-                if (!cell.classList.contains('win-cell')) {
-                    const mark = cell.querySelector('.bet-mark');
-                    if (mark) mark.remove();
-                }
-            });
-            
+            document.querySelectorAll('.bet-mark').forEach(el => el.remove());
+            clearWinHighlights();
             setTimeout(() => {
-                gameState = 'idle';
-                rollBtn.disabled = false;
-                showMessage("請點擊「開始搖骰」進行下一局", "#aaa");
+                gameState = 'idle'; startBtn.disabled = false; startBtn.style.display = 'flex';
+                actionGroup.style.display = 'none'; confirmVoidGroup.style.display = 'none';
+                resultDisplay.innerText = ''; showMessage("請點擊「Start」進行下一局", "#aaa");
                 document.querySelectorAll('.chip').forEach(el => el.style.opacity = 1);
-            }, 3500);
+            }, 3000);
         }
+        function placeBet(el) {
+            if (gameState !== 'betting') return; 
+            const type = el.getAttribute('data-type');
+            currentBets[type] = (currentBets[type] || 0) + currentChipValue;
+            el.classList.add('bet-active');
+            let mark = el.querySelector('.bet-mark');
+            if (!mark) {
+                mark = document.createElement('div'); mark.className = 'bet-mark';
+                el.appendChild(mark);
+            }
+            mark.innerText = currentBets[type];
+            showMessage(`已下注 $${currentBets[type]} 在 ${type}`, "#ffd700");
+        }
+        window.addEventListener('load', () => {
+            updateBoardScale();
+            requestAnimationFrame(() => { initPanelPosition(); initChipBoardPosition(); });
+            setTimeout(() => { initPanelPosition(); initChipBoardPosition(); }, 120);
+        });
+        window.addEventListener('resize', () => {
+            updateBoardScale(); clampPanelPosition(); applyPanelPosition(); clampPosition(); applyBoardPosition();
+        });
     </script>
 </body>
 </html>
