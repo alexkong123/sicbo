@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>骰寶模擬器 - 保留中獎籌碼版</title>
+<title>骰寶模擬器</title>
 <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial','Microsoft JhengHei',sans-serif}
     body{background-color:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:0;overflow-x:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
-    .top-section{width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:30px;padding:20px 10px;background:radial-gradient(circle,#333 0%,#111 100%);border-bottom:4px solid #b89847;flex-shrink:0;position:relative}
+    .top-section{width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:30px;padding:20px 10px;background:radial-gradient(circle,#333 0%,#111 100%);flex-shrink:0;position:relative}
     .history-panel{width:220px;height:280px;background:rgba(0,0,0,.6);border:2px solid #b89847;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;box-shadow:inset 0 0 15px rgba(0,0,0,.8);position:absolute;left:30px;z-index:20}
     .history-panel::-webkit-scrollbar{width:6px;height:6px}
     .history-panel::-webkit-scrollbar-thumb{background:#b89847;border-radius:3px}
@@ -35,10 +35,7 @@
     .display-panel{position:fixed;top:0;left:0;width:100px;height:160px;background-color:#0a0a0a;border:3px solid #333;border-radius:10px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:12px 8px;box-shadow:0 0 20px rgba(0,0,0,.8),inset 0 0 15px rgba(255,255,255,.05);z-index:999;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transform:translate(0,0);transition:box-shadow .2s}
     .display-panel.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none}
     .display-panel.dragging .btn-panel,.display-panel.dragging .numpad-btn{cursor:grabbing}
-    
-    /* 縮小結果顯示區的字體與字距，避免超出邊界 */
     .result-display{font-size:16px;font-weight:bold;color:#fff;text-align:center;height:30px;display:flex;justify-content:center;align-items:center;font-family:'Courier New',Courier,monospace;text-shadow:0 0 10px rgba(255,255,255,.6);letter-spacing:1px;width:100%;white-space:pre}
-    
     .panel-controls{width:100%;flex:1;position:relative;display:flex;justify-content:center;align-items:center}
     .btn-panel{border:none;cursor:pointer;color:#fff;font-weight:bold;box-shadow:0 4px 10px rgba(0,0,0,.5);border-radius:6px;transition:all .2s;text-align:center;box-sizing:border-box}
     .btn-panel:disabled{background:#444!important;color:#777!important;cursor:not-allowed;box-shadow:none}
@@ -49,12 +46,9 @@
     .btn-nomore span{font-size:10px;font-weight:normal;margin-top:2px}
     .btn-void-top{background:linear-gradient(to bottom,#7f8c8d,#95a5a6);flex:2;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:13px}
     .btn-void-top span{font-size:9px;font-weight:normal;margin-top:2px}
-    
-    /* 數字鍵盤 - 恢復原本的舒適間距 */
     #numpadContainer{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:#0a0a0a;z-index:10;padding:2px;box-sizing:border-box;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:3px;border-radius:6px}
     .numpad-btn{background:#333;color:#fff;border:1px solid #444;border-radius:4px;font-size:14px;font-weight:bold;cursor:pointer;display:flex;justify-content:center;align-items:center;padding:0;user-select:none}
     .numpad-btn:active{background:#555}
-
     #confirmVoidGroup{display:none;position:absolute;top:0;left:0;width:100%;height:100%;flex-direction:column;gap:6px}
     #confirmVoidGroup .btn-panel{flex:1;width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:12px}
     #confirmVoidGroup .btn-panel span{font-size:9px}
@@ -128,6 +122,34 @@
     .btn-zoom{width:50px;height:50px;border-radius:50%;background:rgba(0,0,0,.8);color:#fff;border:2px solid #b89847;font-size:24px;font-weight:bold;cursor:pointer;display:flex;justify-content:center;align-items:center;box-shadow:0 4px 10px rgba(0,0,0,.5);transition:all .2s;user-select:none}
     .btn-zoom:hover{background:#b89847;color:#111}
     .btn-zoom.reset{font-size:14px}
+    
+    /* 新增：可上下拖动的金色分割線 */
+    .splitter {
+        width: 100%;
+        height: 14px;
+        background: linear-gradient(to right, #b89847, #ebd197, #b89847);
+        cursor: ns-resize;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 2000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 -2px 5px rgba(0,0,0,0.5);
+        border-top: 1px solid #fff;
+        border-bottom: 1px solid #111;
+        user-select: none;
+        -webkit-user-select: none;
+        flex-shrink: 0;
+    }
+    .splitter::before {
+        content: '≡ ≡';
+        color: #5a430c;
+        font-size: 14px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        pointer-events: none;
+    }
+
     @media (max-width:768px){
         .top-section{flex-direction:column;padding:10px;gap:10px}
         .history-panel{position:relative;left:0;top:0;width:95%;height:70px;flex-direction:row;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:5px 10px;margin:0 auto;gap:10px}
@@ -147,8 +169,7 @@
 </style>
 </head>
 <body>
-
-    <div class="top-section">
+    <div class="top-section" id="topSection">
         <div class="history-panel" id="historyPanel">
             <h3>最新10局</h3>
         </div>
@@ -164,6 +185,8 @@
             <div class="message" id="messageDisplay">請點擊「Start」開始搖骰</div>
         </div>
     </div>
+
+    <div class="splitter" id="splitter"></div>
 
     <div class="display-panel" id="displayPanel">
         <div class="result-display" id="resultDisplay"></div>
@@ -432,7 +455,6 @@
         <button class="btn-zoom" onclick="zoomOut()">-</button>
         <button class="btn-zoom reset" onclick="resetZoom()">重置</button>
     </div>
-
     <script>
         let userScale = 1;
         function updateBoardScale() {
@@ -778,6 +800,77 @@
         window.addEventListener('resize', () => {
             updateBoardScale(); clampPanelPosition(); applyPanelPosition(); clampPosition(); applyBoardPosition();
         });
+
+        /* --- 新增：可上下拖動的黃金分割線與按比例縮放邏輯 --- */
+        let isSplitDragging = false;
+        let splitStartY = 0;
+        let initialTopScale = 1;
+        let initialUserScale = 1;
+        let initialTopHeight = 0;
+
+        const splitter = document.getElementById('splitter');
+        const topSection = document.getElementById('topSection');
+        const mainPlayArea = document.querySelector('.main-play-area');
+
+        splitter.addEventListener('mousedown', startSplitDrag);
+        splitter.addEventListener('touchstart', startSplitDrag, { passive: false });
+        document.addEventListener('mousemove', doSplitDrag);
+        document.addEventListener('touchmove', doSplitDrag, { passive: false });
+        document.addEventListener('mouseup', stopSplitDrag);
+        document.addEventListener('touchend', stopSplitDrag);
+
+        function startSplitDrag(e) {
+            if (e.type === 'mousedown' && e.button !== 0) return;
+            isSplitDragging = true;
+            splitStartY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const currentTransform = mainPlayArea.style.transform;
+            if (currentTransform && currentTransform.includes('scale(')) {
+                initialTopScale = parseFloat(currentTransform.match(/scale\(([^)]+)\)/)[1]);
+            } else {
+                initialTopScale = 1;
+            }
+            
+            initialUserScale = userScale;
+            initialTopHeight = topSection.offsetHeight;
+            document.body.style.cursor = 'ns-resize';
+            if (e.cancelable) e.preventDefault();
+        }
+
+        function doSplitDrag(e) {
+            if (!isSplitDragging) return;
+            const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = currentY - splitStartY;
+
+            // 向上推 (deltaY < 0) -> 上方縮小，下方放大
+            // 向下推 (deltaY > 0) -> 上方放大，下方縮小
+            const scaleChange = deltaY / 300; 
+
+            // 限制縮放範圍，避免介面過大或過小
+            let newTopScale = Math.max(0.3, Math.min(2.0, initialTopScale + scaleChange));
+            let newUserScale = Math.max(0.5, Math.min(3.0, initialUserScale - scaleChange));
+
+            // 應用上方縮放
+            mainPlayArea.style.transform = `scale(${newTopScale})`;
+            mainPlayArea.style.transformOrigin = 'center center';
+            
+            // 動態調整上方容器高度以騰出空間，避免與下方重疊
+            topSection.style.height = Math.max(80, initialTopHeight * newTopScale) + 'px';
+            topSection.style.overflow = 'hidden';
+            
+            // 同步更新下方縮放
+            userScale = newUserScale;
+            updateBoardScale();
+
+            if (e.cancelable) e.preventDefault();
+        }
+
+        function stopSplitDrag() {
+            if (isSplitDragging) {
+                isSplitDragging = false;
+                document.body.style.cursor = 'default';
+            }
+        }
     </script>
 </body>
 </html>
