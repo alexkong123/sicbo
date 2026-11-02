@@ -496,7 +496,7 @@
             if(suppressClick){ e.stopPropagation(); e.preventDefault(); suppressClick = false; }
         }, true);
 
-        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 10, enteredPassword = '';
+        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 5, enteredPassword = '';
         const messageEl = document.getElementById('messageDisplay'), shakerCover = document.getElementById('shakerCover'), shakerContainer = document.getElementById('shakerContainer'), shakerBase = document.getElementById('shakerBase'), diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')], tableBoard = document.getElementById('tableBoard'), startBtn = document.getElementById('startBtn'), actionGroup = document.getElementById('actionGroup'), numpadContainer = document.getElementById('numpadContainer'), confirmVoidGroup = document.getElementById('confirmVoidGroup'), resultDisplay = document.getElementById('resultDisplay'), countdownOverlay = document.getElementById('countdownOverlay'), dimOverlay = document.getElementById('dimOverlay');
         const diceDots = { 1: [5], 2: [3, 7], 3: [3, 5, 7], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
         
@@ -633,7 +633,7 @@
             tableBoard.classList.remove('betting-active');
             document.querySelectorAll('.chip').forEach(el => el.style.opacity = 0.5);
             dimOverlay.style.display = 'block';
-            countdownValue = 10; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
+            countdownValue = 5; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
             showMessage("停止下注，準備開盅...", "#ffd700");
             countdownTimer = setInterval(() => {
                 countdownValue--;
