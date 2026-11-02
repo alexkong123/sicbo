@@ -3,12 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>骰寶模擬器</title>
+<title>骰寶模擬器 - 保留中獎籌碼版</title>
 <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial','Microsoft JhengHei',sans-serif}
     body{background-color:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:0;overflow-x:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
     .top-section{width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:30px;padding:20px 10px;background:radial-gradient(circle,#333 0%,#111 100%);flex-shrink:0;position:relative;transition:height 0.1s linear}
-    .history-panel{width:220px;height:280px;background:rgba(0,0,0,.6);border:2px solid #b89847;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;box-shadow:inset 0 0 15px rgba(0,0,0,.8);position:absolute;left:30px;z-index:20}
+    
+    /* 歷史記錄視窗 - 新增拖拽樣式 */
+    .history-panel{width:220px;height:280px;background:rgba(0,0,0,.6);border:2px solid #b89847;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;box-shadow:inset 0 0 15px rgba(0,0,0,.8);position:fixed;top:20px;left:30px;z-index:999;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transform:translate(0,0);transition:box-shadow .2s}
+    .history-panel.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none}
+    
     .history-panel::-webkit-scrollbar{width:6px;height:6px}
     .history-panel::-webkit-scrollbar-thumb{background:#b89847;border-radius:3px}
     .history-panel h3{color:#b89847;font-size:14px;text-align:center;margin-bottom:5px;border-bottom:1px solid #444;padding-bottom:5px;flex-shrink:0}
@@ -124,14 +128,15 @@
     .btn-zoom.reset{font-size:14px}
     
     /* 可上下拖動的黃金分割線 */
-    .splitter {width: 100%;height: 14px;background: linear-gradient(to right, #b89847, #ebd197, #b89847);cursor: ns-resize;display: flex;justify-content: center;align-items: center;position: relative;z-index: 2000;box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 -2px 5px rgba(0,0,0,0.5);border-top: 1px solid #fff;border-bottom: 1px solid #111;user-select: none;-webkit-user-select: none;flex-shrink: 0}
+    .splitter {width: 100%;height: 14px;background: linear-gradient(to right, #b89847, #ebd197, #b89847);cursor: ns-resize;display: flex;justify-content: center;align-items: center;position: relative;z-index:2000;box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 -2px 5px rgba(0,0,0,0.5);border-top: 1px solid #fff;border-bottom: 1px solid #111;user-select: none;-webkit-user-select: none;flex-shrink: 0}
     .splitter::before {content: '≡ ≡';color: #5a430c;font-size: 14px;font-weight: bold;letter-spacing: 2px;pointer-events: none}
 
     @media (max-width:768px){
         .top-section{flex-direction:column;padding:10px;gap:10px}
-        .history-panel{position:relative;left:0;top:0;width:95%;height:70px;flex-direction:row;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:5px 10px;margin:0 auto;gap:10px}
+        /* 移動端恢復歷史記錄相對位置，並允許拖拽 */
+        .history-panel{position:fixed;top:80px;left:10px;width:180px;height:60px;flex-direction:row;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:5px;gap:6px;border-radius:8px}
         .history-panel h3{display:none}
-        .history-item{padding:4px 6px;height:100%;border-left:2px solid #555}
+        .history-item{padding:4px 6px;height:100%;border-left:2px solid #555;flex-direction:column;gap:2px}
         .main-play-area{flex-direction:column;gap:0}
         .shaker-container{transform:scale(.7);margin:-35px}
         .message{font-size:16px;margin-top:5px;margin-bottom:5px}
@@ -147,6 +152,7 @@
 </head>
 <body>
     <div class="top-section" id="topSection">
+        <!-- 歷史記錄面板已加上 id，並改為 fixed 定位以支援拖拽 -->
         <div class="history-panel" id="historyPanel">
             <h3>最新10局</h3>
         </div>
@@ -340,6 +346,57 @@
         function zoomOut(){ userScale -= .1; if(userScale < .5) userScale = .5; updateBoardScale(); }
         function resetZoom(){ userScale = 1; updateBoardScale(); }
 
+        // --- 歷史記錄面板拖拽邏輯 ---
+        const historyPanel = document.getElementById('historyPanel');
+        let historyX = 0, historyY = 0, isHistoryDragging = false, historyHasMoved = false, historySuppressClick = false, historyStartX = 0, historyStartY = 0, historyStartBoardX = 0, historyStartBoardY = 0;
+        function applyHistoryPosition(){ historyPanel.style.transform = `translate(${historyX}px, ${historyY}px)`; }
+        function clampHistoryPosition(){
+            const rect = historyPanel.getBoundingClientRect(), w = rect.width, h = rect.height;
+            const maxX = window.innerWidth - w - 10, maxY = window.innerHeight - h - 10;
+            if(historyX < 10) historyX = 10; if(historyY < 10) historyY = 10;
+            if(historyX > maxX) historyX = maxX; if(historyY > maxY) historyY = maxY;
+        }
+        function initHistoryPosition(){
+            const rect = historyPanel.getBoundingClientRect();
+            historyX = 30; historyY = 20;
+            clampHistoryPosition(); applyHistoryPosition();
+        }
+        function startHistoryDrag(e){
+            if(e.type === 'mousedown' && e.button !== 0) return;
+            const point = e.touches ? e.touches[0] : e;
+            historyStartX = point.clientX; historyStartY = point.clientY;
+            historyStartBoardX = historyX; historyStartBoardY = historyY;
+            historyHasMoved = false; isHistoryDragging = true;
+            historyPanel.classList.add('dragging');
+        }
+        function moveHistoryDrag(e){
+            if(!isHistoryDragging) return;
+            const point = e.touches ? e.touches[0] : e;
+            const dx = point.clientX - historyStartX, dy = point.clientY - historyStartY;
+            if(!historyHasMoved && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) historyHasMoved = true;
+            if(historyHasMoved){
+                historyX = historyStartBoardX + dx; historyY = historyStartBoardY + dy;
+                clampHistoryPosition(); applyHistoryPosition();
+                historySuppressClick = true;
+                if(e.cancelable) e.preventDefault();
+            }
+        }
+        function endHistoryDrag(){
+            if(!isHistoryDragging) return;
+            isHistoryDragging = false; historyPanel.classList.remove('dragging');
+        }
+        historyPanel.addEventListener('mousedown', startHistoryDrag);
+        document.addEventListener('mousemove', moveHistoryDrag);
+        document.addEventListener('mouseup', endHistoryDrag);
+        historyPanel.addEventListener('touchstart', startHistoryDrag, { passive: true });
+        document.addEventListener('touchmove', moveHistoryDrag, { passive: false });
+        document.addEventListener('touchend', endHistoryDrag);
+        document.addEventListener('touchcancel', endHistoryDrag);
+        historyPanel.addEventListener('click', (e) => {
+            if(historySuppressClick){ e.stopPropagation(); e.preventDefault(); historySuppressClick = false; }
+        }, true);
+
+        // --- 控制面板拖拽邏輯 ---
         const displayPanel = document.getElementById('displayPanel');
         let panelX = 0, panelY = 0, isPanelDragging = false, panelHasMoved = false, panelSuppressClick = false, panelStartX = 0, panelStartY = 0, panelStartBoardX = 0, panelStartBoardY = 0;
         function applyPanelPosition(){ displayPanel.style.transform = `translate(${panelX}px, ${panelY}px)`; }
@@ -389,6 +446,7 @@
             if(panelSuppressClick){ e.stopPropagation(); e.preventDefault(); panelSuppressClick = false; }
         }, true);
 
+        // --- 籌碼面板拖拽邏輯 ---
         const chipBoard = document.getElementById('chipBoard');
         let isDragging = false, hasMoved = false, suppressClick = false, dragStartX = 0, dragStartY = 0, boardStartX = 0, boardStartY = 0, boardX = 0, boardY = 0;
         function applyBoardPosition(){ chipBoard.style.transform = `translate(${boardX}px, ${boardY}px)`; }
@@ -438,8 +496,8 @@
             if(suppressClick){ e.stopPropagation(); e.preventDefault(); suppressClick = false; }
         }, true);
 
-        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 5, enteredPassword = '';
-        const messageEl = document.getElementById('messageDisplay'), shakerCover = document.getElementById('shakerCover'), shakerContainer = document.getElementById('shakerContainer'), shakerBase = document.getElementById('shakerBase'), diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')], tableBoard = document.getElementById('tableBoard'), historyPanel = document.getElementById('historyPanel'), startBtn = document.getElementById('startBtn'), actionGroup = document.getElementById('actionGroup'), numpadContainer = document.getElementById('numpadContainer'), confirmVoidGroup = document.getElementById('confirmVoidGroup'), resultDisplay = document.getElementById('resultDisplay'), countdownOverlay = document.getElementById('countdownOverlay'), dimOverlay = document.getElementById('dimOverlay');
+        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 10, enteredPassword = '';
+        const messageEl = document.getElementById('messageDisplay'), shakerCover = document.getElementById('shakerCover'), shakerContainer = document.getElementById('shakerContainer'), shakerBase = document.getElementById('shakerBase'), diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')], tableBoard = document.getElementById('tableBoard'), startBtn = document.getElementById('startBtn'), actionGroup = document.getElementById('actionGroup'), numpadContainer = document.getElementById('numpadContainer'), confirmVoidGroup = document.getElementById('confirmVoidGroup'), resultDisplay = document.getElementById('resultDisplay'), countdownOverlay = document.getElementById('countdownOverlay'), dimOverlay = document.getElementById('dimOverlay');
         const diceDots = { 1: [5], 2: [3, 7], 3: [3, 5, 7], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
         
         function renderDice(el, val) {
@@ -467,14 +525,13 @@
             });
         }
         
-        // 採用極坐標（圓形分佈），確保絕對不會超出底盤邊界
         function positionDiceRandomly() {
             const points = [];
             const startAngle = Math.random() * Math.PI * 2;
             
             for (let i = 0; i < 3; i++) {
                 const angle = startAngle + i * (Math.PI * 2 / 3);
-                const r = 45 + Math.random() * 15; // 半徑 45~60
+                const r = 45 + Math.random() * 15; 
                 
                 const px = 110 + Math.cos(angle) * r - 20; 
                 const py = 110 + Math.sin(angle) * r - 20;
@@ -576,7 +633,7 @@
             tableBoard.classList.remove('betting-active');
             document.querySelectorAll('.chip').forEach(el => el.style.opacity = 0.5);
             dimOverlay.style.display = 'block';
-            countdownValue = 5; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
+            countdownValue = 10; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
             showMessage("停止下注，準備開盅...", "#ffd700");
             countdownTimer = setInterval(() => {
                 countdownValue--;
@@ -682,11 +739,22 @@
         }
         window.addEventListener('load', () => {
             updateBoardScale();
-            requestAnimationFrame(() => { initPanelPosition(); initChipBoardPosition(); });
-            setTimeout(() => { initPanelPosition(); initChipBoardPosition(); }, 120);
+            requestAnimationFrame(() => { 
+                initHistoryPosition(); 
+                initPanelPosition(); 
+                initChipBoardPosition(); 
+            });
+            setTimeout(() => { 
+                initHistoryPosition(); 
+                initPanelPosition(); 
+                initChipBoardPosition(); 
+            }, 120);
         });
         window.addEventListener('resize', () => {
-            updateBoardScale(); clampPanelPosition(); applyPanelPosition(); clampPosition(); applyBoardPosition();
+            updateBoardScale(); 
+            clampHistoryPosition(); applyHistoryPosition();
+            clampPanelPosition(); applyPanelPosition(); 
+            clampPosition(); applyBoardPosition();
         });
 
         /* --- 可上下拖動的黃金分割線邏輯 --- */
