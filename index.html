@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>骰寶模擬器 - 保留中獎籌碼版</title>
+<title>骰寶模擬器</title>
 <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:'Arial','Microsoft JhengHei',sans-serif}
     body{background-color:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:0;overflow-x:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
     .top-section{width:100%;display:flex;flex-direction:row;justify-content:center;align-items:center;gap:30px;padding:20px 10px;background:radial-gradient(circle,#333 0%,#111 100%);flex-shrink:0;position:relative;transition:height 0.1s linear}
     
-    /* 歷史記錄視窗 - 新增拖拽樣式 */
+    /* 歷史記錄視窗 - 增加拖拽樣式 */
     .history-panel{width:220px;height:280px;background:rgba(0,0,0,.6);border:2px solid #b89847;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;box-shadow:inset 0 0 15px rgba(0,0,0,.8);position:fixed;top:20px;left:30px;z-index:999;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transform:translate(0,0);transition:box-shadow .2s}
-    .history-panel.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none}
+    .history-panel.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none;z-index:1001}
     
     .history-panel::-webkit-scrollbar{width:6px;height:6px}
     .history-panel::-webkit-scrollbar-thumb{background:#b89847;border-radius:3px}
@@ -37,7 +37,7 @@
     @keyframes shake{0%{transform:translate(2px,2px) rotate(0)}10%{transform:translate(-2px,-4px) rotate(-2deg)}20%{transform:translate(-5px,0) rotate(2deg)}30%{transform:translate(5px,4px) rotate(0)}40%{transform:translate(2px,-2px) rotate(2deg)}50%{transform:translate(-2px,4px) rotate(-2deg)}60%{transform:translate(-5px,2px) rotate(0)}70%{transform:translate(5px,2px) rotate(-2deg)}80%{transform:translate(-2px,-2px) rotate(2deg)}90%{transform:translate(2px,4px) rotate(0)}100%{transform:translate(2px,-4px) rotate(-2deg)}}
     .shaking{animation:shake .4s infinite}
     .display-panel{position:fixed;top:0;left:0;width:100px;height:160px;background-color:#0a0a0a;border:3px solid #333;border-radius:10px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:12px 8px;box-shadow:0 0 20px rgba(0,0,0,.8),inset 0 0 15px rgba(255,255,255,.05);z-index:999;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transform:translate(0,0);transition:box-shadow .2s}
-    .display-panel.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none}
+    .display-panel.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none;z-index:1001}
     .display-panel.dragging .btn-panel,.display-panel.dragging .numpad-btn{cursor:grabbing}
     .result-display{font-size:16px;font-weight:bold;color:#fff;text-align:center;height:30px;display:flex;justify-content:center;align-items:center;font-family:'Courier New',Courier,monospace;text-shadow:0 0 10px rgba(255,255,255,.6);letter-spacing:1px;width:100%;white-space:pre}
     .panel-controls{width:100%;flex:1;position:relative;display:flex;justify-content:center;align-items:center}
@@ -59,7 +59,7 @@
     .btn-confirm{background:linear-gradient(to bottom,#2ecc71,#27ae60)}
     .btn-void{background:linear-gradient(to bottom,#7f8c8d,#95a5a6)}
     .chip-board{position:fixed;left:0;top:0;display:flex;gap:10px;justify-content:center;align-items:center;background:rgba(0,0,0,.7);padding:8px 14px;border-radius:50px;border:2px solid #b89847;box-shadow:0 8px 20px rgba(0,0,0,.8);z-index:1000;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform;transform:translate(0,0);transition:box-shadow .2s}
-    .chip-board.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none}
+    .chip-board.dragging{cursor:grabbing;box-shadow:0 14px 32px rgba(0,0,0,.9);transition:none;z-index:1001}
     .chip-board.dragging .chip{cursor:grabbing}
     .chip{width:44px;height:44px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:12px;font-weight:bold;color:#fff;cursor:pointer;transition:transform .2s,box-shadow .2s,opacity .2s;border:3px solid transparent;text-shadow:1px 1px 2px rgba(0,0,0,.8);flex-shrink:0}
     .chip:hover{transform:translateY(-3px)}
@@ -131,12 +131,15 @@
     .splitter {width: 100%;height: 14px;background: linear-gradient(to right, #b89847, #ebd197, #b89847);cursor: ns-resize;display: flex;justify-content: center;align-items: center;position: relative;z-index:2000;box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 -2px 5px rgba(0,0,0,0.5);border-top: 1px solid #fff;border-bottom: 1px solid #111;user-select: none;-webkit-user-select: none;flex-shrink: 0}
     .splitter::before {content: '≡ ≡';color: #5a430c;font-size: 14px;font-weight: bold;letter-spacing: 2px;pointer-events: none}
 
+    /* 手機端特別優化 */
     @media (max-width:768px){
         .top-section{flex-direction:column;padding:10px;gap:10px}
-        /* 移動端恢復歷史記錄相對位置，並允許拖拽 */
-        .history-panel{position:fixed;top:80px;left:10px;width:180px;height:60px;flex-direction:row;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:5px;gap:6px;border-radius:8px}
+        
+        /* 歷史記錄面板：手機端固定在左上角，避免遮擋中間的骰盅 */
+        .history-panel{position:fixed;top:10px;left:10px;width:160px;height:60px;flex-direction:row;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:5px;gap:6px;border-radius:8px}
         .history-panel h3{display:none}
         .history-item{padding:4px 6px;height:100%;border-left:2px solid #555;flex-direction:column;gap:2px}
+        
         .main-play-area{flex-direction:column;gap:0}
         .shaker-container{transform:scale(.7);margin:-35px}
         .message{font-size:16px;margin-top:5px;margin-bottom:5px}
@@ -152,7 +155,7 @@
 </head>
 <body>
     <div class="top-section" id="topSection">
-        <!-- 歷史記錄面板已加上 id，並改為 fixed 定位以支援拖拽 -->
+        <!-- 歷史記錄面板 -->
         <div class="history-panel" id="historyPanel">
             <h3>最新10局</h3>
         </div>
@@ -353,12 +356,17 @@
         function clampHistoryPosition(){
             const rect = historyPanel.getBoundingClientRect(), w = rect.width, h = rect.height;
             const maxX = window.innerWidth - w - 10, maxY = window.innerHeight - h - 10;
-            if(historyX < 10) historyX = 10; if(historyY < 10) historyY = 10;
+            if(historyX < 10) historyX = 10; if(historyY < 10) historyY = 10; // 確保向上推時最小距離頂部10px
             if(historyX > maxX) historyX = maxX; if(historyY > maxY) historyY = maxY;
         }
         function initHistoryPosition(){
-            const rect = historyPanel.getBoundingClientRect();
-            historyX = 30; historyY = 20;
+            // 偵測是否為手機寬度，如果是，初始位置設為左上角
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                historyX = 10; historyY = 10;
+            } else {
+                historyX = 30; historyY = 20;
+            }
             clampHistoryPosition(); applyHistoryPosition();
         }
         function startHistoryDrag(e){
@@ -378,7 +386,7 @@
                 historyX = historyStartBoardX + dx; historyY = historyStartBoardY + dy;
                 clampHistoryPosition(); applyHistoryPosition();
                 historySuppressClick = true;
-                if(e.cancelable) e.preventDefault();
+                if(e.cancelable) e.preventDefault(); // 阻止手機端拖拽時觸發頁面滾動
             }
         }
         function endHistoryDrag(){
@@ -388,7 +396,7 @@
         historyPanel.addEventListener('mousedown', startHistoryDrag);
         document.addEventListener('mousemove', moveHistoryDrag);
         document.addEventListener('mouseup', endHistoryDrag);
-        historyPanel.addEventListener('touchstart', startHistoryDrag, { passive: true });
+        historyPanel.addEventListener('touchstart', startHistoryDrag, { passive: false });
         document.addEventListener('touchmove', moveHistoryDrag, { passive: false });
         document.addEventListener('touchend', endHistoryDrag);
         document.addEventListener('touchcancel', endHistoryDrag);
@@ -408,7 +416,12 @@
         }
         function initPanelPosition(){
             const rect = displayPanel.getBoundingClientRect();
-            panelX = window.innerWidth - rect.width - 20; panelY = 120;
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                 panelX = window.innerWidth - rect.width - 15; panelY = 20;
+            } else {
+                 panelX = window.innerWidth - rect.width - 20; panelY = 120;
+            }
             clampPanelPosition(); applyPanelPosition();
         }
         function startPanelDrag(e){
@@ -438,7 +451,7 @@
         displayPanel.addEventListener('mousedown', startPanelDrag);
         document.addEventListener('mousemove', movePanelDrag);
         document.addEventListener('mouseup', endPanelDrag);
-        displayPanel.addEventListener('touchstart', startPanelDrag, { passive: true });
+        displayPanel.addEventListener('touchstart', startPanelDrag, { passive: false });
         document.addEventListener('touchmove', movePanelDrag, { passive: false });
         document.addEventListener('touchend', endPanelDrag);
         document.addEventListener('touchcancel', endPanelDrag);
@@ -488,7 +501,7 @@
         chipBoard.addEventListener('mousedown', startDrag);
         document.addEventListener('mousemove', moveDrag);
         document.addEventListener('mouseup', endDrag);
-        chipBoard.addEventListener('touchstart', startDrag, { passive: true });
+        chipBoard.addEventListener('touchstart', startDrag, { passive: false });
         document.addEventListener('touchmove', moveDrag, { passive: false });
         document.addEventListener('touchend', endDrag);
         document.addEventListener('touchcancel', endDrag);
@@ -496,7 +509,7 @@
             if(suppressClick){ e.stopPropagation(); e.preventDefault(); suppressClick = false; }
         }, true);
 
-        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 5, enteredPassword = '';
+        let currentChipValue = 10000, currentBets = {}, currentWinnings = 0, gameState = 'idle', currentDice = [1, 1, 1], isStacked = false, historyResults = [], countdownTimer = null, countdownValue = 10, enteredPassword = '';
         const messageEl = document.getElementById('messageDisplay'), shakerCover = document.getElementById('shakerCover'), shakerContainer = document.getElementById('shakerContainer'), shakerBase = document.getElementById('shakerBase'), diceEls = [document.getElementById('die1'), document.getElementById('die2'), document.getElementById('die3')], tableBoard = document.getElementById('tableBoard'), startBtn = document.getElementById('startBtn'), actionGroup = document.getElementById('actionGroup'), numpadContainer = document.getElementById('numpadContainer'), confirmVoidGroup = document.getElementById('confirmVoidGroup'), resultDisplay = document.getElementById('resultDisplay'), countdownOverlay = document.getElementById('countdownOverlay'), dimOverlay = document.getElementById('dimOverlay');
         const diceDots = { 1: [5], 2: [3, 7], 3: [3, 5, 7], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
         
@@ -633,7 +646,7 @@
             tableBoard.classList.remove('betting-active');
             document.querySelectorAll('.chip').forEach(el => el.style.opacity = 0.5);
             dimOverlay.style.display = 'block';
-            countdownValue = 5; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
+            countdownValue = 10; countdownOverlay.innerText = countdownValue; countdownOverlay.style.display = 'block';
             showMessage("停止下注，準備開盅...", "#ffd700");
             countdownTimer = setInterval(() => {
                 countdownValue--;
